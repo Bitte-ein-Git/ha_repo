@@ -1,0 +1,4 @@
+# https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
+name: heyFordy's home assistant repository
+url: "https://github.com/bitte-ein-git/ha_repo"
+maintainer: "Bitte ein Git"
