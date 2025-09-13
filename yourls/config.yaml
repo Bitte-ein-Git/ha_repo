@@ -1,0 +1,29 @@
+name: "YOURLS URL Shortener"
+description: "Your Own URL Shortener. Requires a database (e.g., MariaDB addon)."
+version: "1.10.2"
+ingress: true
+ingress_stream: true
+slug: "yourls"
+init: false
+arch:
+  - aarch64
+  - amd64
+ports:
+  80/tcp: 80
+webui: "http://[HOST]:[PORT:80]"
+options:
+  yourls_site: "http://homeassistant.local"
+  yourls_user: "admin"
+  yourls_pass: ""
+  db_host: "core-mariadb"
+  db_user: "yourls"
+  db_pass: ""
+  db_name: "yourls"
+schema:
+  yourls_site: str
+  yourls_user: str
+  yourls_pass: password
+  db_host: str
+  db_user: str
+  db_pass: password
+  db_name: str

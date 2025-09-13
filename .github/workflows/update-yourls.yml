@@ -1,0 +1,100 @@
+name: Update YOURLS Version
+
+# triggers for the workflow
+on:
+  # run on a schedule (daily at 3 AM)
+  schedule:
+    - cron: "0 3 * * *"
+  # allow manual triggering
+  workflow_dispatch:
+
+# jobs to run in the workflow
+jobs:
+  # update job
+  update:
+    # run on ubuntu latest
+    runs-on: ubuntu-latest
+    # permissions for the job
+    permissions:
+      contents: write # to push changes to the repo
+    # steps to execute
+    steps:
+      # checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # get the latest yourls release version
+      - name: Get Latest YOURLS Release
+        id: get_version
+        run: |
+          # fetch latest release tag from yourls github repo
+          LATEST_VERSION=$(curl -sL "https://api.github.com/repos/YOURLS/YOURLS/releases/latest" | jq -r ".tag_name")
+          # check if version was fetched
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "Failed to fetch latest YOURLS version."
+            exit 1
+          fi
+          # output the latest version
+          echo "latest_version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # get the current yourls version from config.yaml
+      - name: Get Current Version
+        id: current_version
+        run: |
+          # extract current version from config.yaml using yq
+          CURRENT_VERSION=$(yq e '.version' yourls/config.yaml)
+          # output the current version
+          echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # check if an update is needed
+      - name: Check for Updates
+        id: check_updates
+        run: |
+          # compare latest and current versions
+          if [ "${{ steps.get_version.outputs.latest_version }}" == "${{ steps.current_version.outputs.current_version }}" ]; then
+            echo "YOURLS is already up-to-date."
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+          else
+            echo "New YOURLS version found: ${{ steps.get_version.outputs.latest_version }}"
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      # install yq for yaml processing
+      - name: Install yq
+        if: steps.check_updates.outputs.update_needed == 'true'
+        run: |
+          # download and install yq
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+        shell: bash
+
+      # update the config.yaml file
+      - name: Update Files
+        if: steps.check_updates.outputs.update_needed == 'true'
+        run: |
+          # get latest version from previous step
+          LATEST_VERSION="${{ steps.get_version.outputs.latest_version }}"
+          
+          # update the version in the config.yaml file
+          echo "Updating config.yaml..."
+          yq e -i ".version = \"$LATEST_VERSION\"" yourls/config.yaml
+        shell: bash
+
+      # commit and push the changes
+      - name: Commit and Push Changes
+        if: steps.check_updates.outputs.update_needed == 'true'
+        run: |
+          # configure git user
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # add and commit the changes
+          git add yourls/config.yaml
+          git commit -m "chore(yourls): Update to version ${{ steps.get_version.outputs.latest_version }}"
+          
+          # push the changes to the repository
+          git push
+        shell: bash

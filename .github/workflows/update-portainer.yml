@@ -1,0 +1,96 @@
+name: Update Portainer Version
+
+# triggers for the workflow
+on:
+  # run on a schedule (daily at 3 AM)
+  schedule:
+    - cron: "0 3 * * *"
+  # allow manual triggering
+  workflow_dispatch:
+
+# jobs to run in the workflow
+jobs:
+  # update job
+  update:
+    # run on ubuntu latest
+    runs-on: ubuntu-latest
+    # permissions for the job
+    permissions:
+      contents: write # to push changes to the repo
+    # steps to execute
+    steps:
+      # checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # get the latest portainer release version
+      - name: Get Latest Portainer Release
+        id: get_version
+        run: |
+          # fetch latest release tag from portainer github repo
+          LATEST_VERSION=$(curl -sL "https://api.github.com/repos/portainer/portainer/releases/latest" | jq -r ".tag_name")
+          # check if version was fetched
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "Failed to fetch latest Portainer version."
+            exit 1
+          fi
+          # output the latest version
+          echo "latest_version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # get the current portainer version from config.json
+      - name: Get Current Version
+        id: current_version
+        run: |
+          # extract current version from config.json
+          CURRENT_VERSION=$(jq -r '.version' portainer/config.json)
+          # output the current version
+          echo "current_version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      # check if an update is needed
+      - name: Check for Updates
+        id: check_updates
+        run: |
+          # compare latest and current versions
+          if [ "${{ steps.get_version.outputs.latest_version }}" == "${{ steps.current_version.outputs.current_version }}" ]; then
+            echo "Portainer is already up-to-date."
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+          else
+            echo "New Portainer version found: ${{ steps.get_version.outputs.latest_version }}"
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      # update the files if a new version is available
+      - name: Update Files
+        if: steps.check_updates.outputs.update_needed == 'true'
+        run: |
+          # get versions from previous steps
+          LATEST_VERSION="${{ steps.get_version.outputs.latest_version }}"
+          CURRENT_VERSION="${{ steps.current_version.outputs.current_version }}"
+          
+          # update the version in the Dockerfile
+          echo "Updating Dockerfile..."
+          sed -i "s/${CURRENT_VERSION}/${LATEST_VERSION}/g" portainer/Dockerfile
+          
+          # update the version in config.json
+          echo "Updating config.json..."
+          jq --arg new_version "$LATEST_VERSION" '.version = $new_version' portainer/config.json > tmp.$$.json && mv tmp.$$.json portainer/config.json
+        shell: bash
+
+      # commit and push the changes
+      - name: Commit and Push Changes
+        if: steps.check_updates.outputs.update_needed == 'true'
+        run: |
+          # configure git user
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # add and commit the changes
+          git add portainer/Dockerfile portainer/config.json
+          git commit -m "chore(portainer): Update to version ${{ steps.get_version.outputs.latest_version }}"
+          
+          # push the changes to the repository
+          git push
+        shell: bash

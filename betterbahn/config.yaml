@@ -1,0 +1,21 @@
+# name of the addon
+name: "BetterBahn"
+# description of the addon
+description: "Find cheaper train tickets with split-ticketing."
+# version of the addon
+version: "1.0.0"
+# slug of the addon
+slug: "betterbahn"
+# startup mode
+init: false
+# supported architectures
+arch:
+  - aarch64
+  - amd64
+# ports used by the addon
+ports:
+  3000/tcp: 3000
+# web ui mapping
+webui: "http://[HOST]:[PORT:3000]"
+ingress: true
+ingress_stream: true
