@@ -14,8 +14,8 @@ arch:
   - amd64
 # ports used by the addon
 ports:
-  3000/tcp: 3000
+  8169/tcp: null
 # web ui mapping
-webui: "http://[HOST]:[PORT:3000]"
+webui: "http://[HOST]:[PORT:8169]"
 ingress: true
 ingress_stream: true

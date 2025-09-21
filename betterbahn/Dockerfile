@@ -48,7 +48,7 @@ COPY --from=builder /app/node_modules/.pnpm/db-hafas-stations@2.0.0 ./node_modul
 # switch to non-root user
 USER node
 # expose port
-EXPOSE 3000
+EXPOSE 8169
 
 # start command
 CMD ["node", "server.js"]
