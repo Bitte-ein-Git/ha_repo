@@ -8,12 +8,18 @@ export AGENT_SECRET
 
 bashio::log.info 'Starting Portainer...'
 
+# set portainer data directory
 options+=(--data /data)
-options+=(--bind 0.0.0.0:8099)
+
+# bind to port 9000 for web interface
+options+=(--bind 0.0.0.0:9000)
+
+# connect to docker host
 options+=(--host unix:///var/run/docker.sock)
 
 # Export agent secret, if defined
-if bashio::config.has_value 'agent_secret' ; then
+if bashio::config.has_value 'agent_secret' ;
+then
     AGENT_SECRET=$(bashio::config 'agent_secret')
 fi
 

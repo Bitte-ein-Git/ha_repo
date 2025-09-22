@@ -1,11 +1,12 @@
 {
   "name": "Portainer",
-  "version": "2.33.1",
+  "version": "2.20.2",
   "slug": "portainer",
   "description": "Portainer: web-gui for your Docker environment!",
   "url": "https://github.com/bitte-ein-git/ha_repo/",
   "advanced": true,
   "ingress": true,
+  "ingress_port": 9000,
   "ingress_stream": true,
   "startup": "services",
   "panel_icon": "mdi:docker",
