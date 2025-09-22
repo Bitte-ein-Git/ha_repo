@@ -17,11 +17,15 @@ export const Segment = ({
 	index,
 	segmentsWithoutPricing,
 	hasDeutschlandTicket,
+	bahnCard,
+	travelClass
 }: {
 	segment: VendoJourney;
 	index: number;
 	segmentsWithoutPricing: number[];
 	hasDeutschlandTicket: boolean;
+	bahnCard: string | null;
+	travelClass: string
 }) => {
 	const segmentHasFlixTrain = getJourneyLegsWithTransfers(segment).some((leg) =>
 		legIsFlixTrain(leg)
@@ -63,17 +67,16 @@ export const Segment = ({
 						</span>
 					) : hasUnknownPrice ? (
 						<span
-							className={`text-xs font-medium ${
-								segmentHasFlixTrain ? "text-purple-600" : "text-orange-600"
-							}`}
+							className={`text-xs font-medium ${segmentHasFlixTrain ? "text-purple-600" : "text-orange-600"
+								}`}
 						>
-							{segmentHasFlixTrain ? "FlixTrain" : "Price unknown"}
+							{segmentHasFlixTrain ? "FlixTrain" : "Preis unbekannt"}
 						</span>
 					) : (
 						<span>
-							{segment.price?.amount !== undefined
-								? formatPriceDE(segment.price.amount)
-								: "Price on request"}
+							{segment.price?.amount === undefined
+								? "Preis auf Anfrage"
+								: formatPriceDE(segment.price.amount)}
 						</span>
 					)}
 				</div>
@@ -81,7 +84,7 @@ export const Segment = ({
 					onClick={(e) => {
 						e.stopPropagation();
 
-						const dbUrl = createSegmentSearchUrl(segment, 2);
+						const dbUrl = createSegmentSearchUrl(segment, Number(travelClass), hasDeutschlandTicket, bahnCard);
 
 						if (dbUrl && !dbUrl.startsWith("Error:")) {
 							window.open(dbUrl, "_blank");
@@ -90,7 +93,7 @@ export const Segment = ({
 							alert("Failed to generate booking URL.");
 						}
 					}}
-					className="mt-1 px-3 py-1 bg-green-600 text-foreground text-xs rounded-md "
+					className="mt-1 px-3 py-1 bg-green-600 hover:bg-green-700 hover:cursor-pointer text-foreground text-xs rounded-md "
 				>
 					Zur Buchung
 				</button>

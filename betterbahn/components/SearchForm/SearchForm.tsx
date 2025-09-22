@@ -15,7 +15,7 @@ export const SearchForm = () => {
 	const handleUrlParsingAndNavigation = () => {
 		if (!url.trim()) {
 			setUrlParseError(
-				"Please enter text containing a DB booking URL or paste a direct DB booking link"
+				"Bitte geben Sie Text mit einer DB-Buchungs-URL ein oder fügen Sie einen direkten DB-Buchungslink ein"
 			);
 			return;
 		}
@@ -24,7 +24,7 @@ export const SearchForm = () => {
 
 		if (!extractedUrl) {
 			setUrlParseError(
-				"No valid DB booking URL found. Please paste text containing a Deutsche Bahn booking link (from bahn.de with /buchung/start path) or check that your URL is correct."
+				"Keine gültige DB-Buchungs-URL gefunden. Bitte fügen Sie Text mit einem Deutsche Bahn Buchungslink ein (von bahn.de mit /buchung/start Pfad) oder überprüfen Sie, ob Ihre URL korrekt ist."
 			);
 			return;
 		}
@@ -44,7 +44,6 @@ export const SearchForm = () => {
 	return (
 		<section>
 			{/* Unified Input and Search Section */}
-
 			<div className="space-y-6">
 				<URLInput url={url} setUrl={setUrl} />
 				<div className="flex flex-col md:flex-row gap-8">
@@ -53,9 +52,9 @@ export const SearchForm = () => {
 						onChange={(e) => updateFormData({ bahnCard: e.target.value })}
 						className="w-full px-3 py-2 resize-vertical border-b-2 border-gray-300 focus:ring-2 focus:ring-primary"
 					>
-						<option value="none">Keine BahnCard</option>
-						<option value="25">BahnCard 25 </option>
-						<option value="50">BahnCard 50 </option>
+						<option className="text-black" value="none">Keine BahnCard</option>
+						<option className="text-black" value="25">BahnCard 25 </option>
+						<option className="text-black" value="50">BahnCard 50 </option>
 					</select>
 					<input
 						type="number"
@@ -75,8 +74,8 @@ export const SearchForm = () => {
 						}
 						className="w-full px-3 py-2 resize-vertical border-b-2 border-gray-300 focus:ring-2 focus:ring-primary"
 					>
-						<option value="true">Deutschlandticket</option>
-						<option value="false">Kein Deutschlandticket</option>
+						<option className="text-black" value="true">Deutschlandticket</option>
+						<option className="text-black" value="false">Kein Deutschlandticket</option>
 					</select>
 					<select
 						value={String(formData.travelClass)}
@@ -87,15 +86,15 @@ export const SearchForm = () => {
 						}
 						className="w-full px-3 py-2 resize-vertical border-b-2 border-gray-300 focus:ring-2 focus:ring-primary"
 					>
-						<option value="1">Erste Klasse</option>
-						<option value="2">Zweite Klasse</option>
+						<option className="text-black" value="1">Erste Klasse</option>
+						<option className="text-black" value="2">Zweite Klasse</option>
 					</select>
 				</div>
 
 				<button
 					onClick={handleUrlParsingAndNavigation}
 					disabled={!url.trim()}
-					className="w-full bg-primary text-white py-3 px-4 rounded-full hover:primaryfocus:outline-none  disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-lg font-semibold"
+					className="w-full bg-primary text-white py-3 px-4 rounded-full hover:cursor-pointer hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-lg font-semibold"
 				>
 					Bessere Verbindung suchen
 				</button>
@@ -103,9 +102,9 @@ export const SearchForm = () => {
 
 			{urlParseError && (
 				<div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-					<strong>Error:</strong> {urlParseError}
+					<strong>Fehler:</strong> {urlParseError}
 				</div>
 			)}
-		</section>
+		</section >
 	);
 };

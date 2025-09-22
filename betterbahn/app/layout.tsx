@@ -1,4 +1,3 @@
-import { Footer } from "@/components/Layout/Footer";
 import { Navbar } from "@/components/Layout/Navbar";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
@@ -21,13 +20,12 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
-		<html lang="en">
+		<html lang="de">
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased container mx-auto px-2 py-6`}
 			>
 				<Navbar />
 				{children}
-				<Footer />
 			</body>
 		</html>
 	);
