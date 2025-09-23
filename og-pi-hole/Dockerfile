@@ -7,9 +7,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # set environment variables
 ENV PATH="${PATH}:/opt/pihole" \
-    CORE_TAG="v4.4" \
-    WEB_TAG="v4.3.3" \
-    FTL_TAG="v4.3.1"
+    CORE_TAG="v5.17.3" \
+    WEB_TAG="v5.21" \
+    FTL_TAG="v5.24"
 
 # copy patches
 COPY rootfs/patches /patches
@@ -75,8 +75,6 @@ RUN \
     && git -C /root/FTL checkout -b master \
     \
     && cd /root/FTL \
-    && patch -p1 < /patches/FTL/fix-nettle-3.5-compat.patch \
-    && patch -p1 < /patches/FTL/fix-poll-h-include-warning-on-musl.patch \
     && patch -p1 < /patches/FTL/no-backtrace-on-musl.patch \
     && make \
     && mv /root/FTL/pihole-FTL /usr/bin \
@@ -120,5 +118,4 @@ LABEL \
     org.label-schema.url="https://community.home-assistant.io/t/home-assistant-community-add-on-pi-hole/33817?u=frenck" \
     org.label-schema.usage="https://github.com/hassio-addons/addon-pi-hole/tree/master/README.md" \
     org.label-schema.vcs-ref=${BUILD_REF} \
-    org.label-schema.vcs-url="https://github.com/hassio-addons/addon-pi-hole" \
-    org.label-schema.vendor="Home Assistant Community Add-ons"
+    org.label-schema.vcs-url="https://

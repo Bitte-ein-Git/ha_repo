@@ -9,16 +9,9 @@
 <details>
   <summary style="direction: rtl;">
       <h2 style="color: orange; border-bottom: 0; display: inline-block; direction: ltr;">
-<<<<<<< Updated upstream
       <i><u>⭐️ View Available Add-ons</u></i>
       </h2></summary>
-
-=======
-      <b><u>⭐️ View Available Add-ons</u></b>
-      </h2></summary>
-
   
->>>>>>> Stashed changes
   | Logo | Add-on |
   |:----:|:---|
   | <img src="portainer/logo.png" width="128"> | [**Portainer**](./portainer) |
@@ -26,15 +19,8 @@
   | <img src="og-homekit/icon.png" width="128"> | [**OG HomeKit**](./og-homekit) |
   | <img src="og-pi-hole/logo.png" width="128"> | [**OG Pi-hole DNS-Server**](./og-pi-hole) |
   | <img src="yourls/logo.png" width="128"> | [**YOURLS**](./yourls) |
-<<<<<<< Updated upstream
-=======
 
 </details>
-
-> [!CAUTION]
-> Everything work in progress! Most stuff won't work or runs unstable!
->>>>>>> Stashed changes
-
 </details>
 </div>
 

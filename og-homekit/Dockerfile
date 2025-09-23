@@ -26,9 +26,8 @@ RUN \
     && npm set unsafe-perm true \
     \
     && npm -g install \
-        node-gyp@3.8.0 \
-        homebridge@0.4.44 \
-        homebridge-homeassistant@3.1.0 \
+        homebridge@1.7.0 \
+        homebridge-homeassistant@4.0.0 \
     \
     && apk del --purge .build-dependencies
 

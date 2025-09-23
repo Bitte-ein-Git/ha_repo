@@ -1,0 +1,100 @@
+name: "🌀 » ⬇️ Addon-Updater"
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Update Portainer
+        id: portainer
+        run: |
+          LATEST_VERSION=$(curl -sL "https://api.github.com/repos/portainer/portainer/releases/latest" | jq -r ".tag_name")
+          CURRENT_VERSION=$(jq -r '.version' portainer/config.json)
+          echo "latest_portainer=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+          
+          if [ "${LATEST_VERSION}" != "${CURRENT_VERSION}" ]; then
+            echo "update_portainer=true" >> $GITHUB_OUTPUT
+            echo "Updating Portainer from ${CURRENT_VERSION} to ${LATEST_VERSION}"
+            sed -i "s/${CURRENT_VERSION}/${LATEST_VERSION}/g" portainer/Dockerfile
+            jq --arg new_version "$LATEST_VERSION" '.version = $new_version' portainer/config.json > tmp.$$.json && mv tmp.$$.json portainer/config.json
+            
+            # Fetch and process changelog
+            CHANGELOG_BODY=$(curl -sL "https://api.github.com/repos/portainer/portainer/releases/latest" | jq -r ".body")
+            
+            # Extract Deprecated Features
+            DEPRECATED=$(echo "$CHANGELOG_BODY" | sed -n '/^\*\*Deprecated features\*\*/,/^\*\*Removed features\*\*/p' | sed '1d;$d')
+            
+            # Extract Changes
+            CHANGES=$(echo "$CHANGELOG_BODY" | sed -n '/^## Changes:/,/^## /p' | sed '1d;$d')
+            
+            {
+              echo "### Deprecated Features"
+              echo "$DEPRECATED"
+              echo ""
+              echo "### Changes"
+              echo "$CHANGES"
+            } > portainer/CHANGELOG.md
+          else
+            echo "update_portainer=false" >> $GITHUB_OUTPUT
+            echo "Portainer is up-to-date."
+          fi
+
+      - name: Update YOURLS
+        id: yourls
+        run: |
+          LATEST_VERSION=$(curl -sL "https://api.github.com/repos/YOURLS/YOURLS/releases/latest" | jq -r ".tag_name")
+          CURRENT_VERSION=$(yq e '.version' yourls/config.yaml)
+          echo "latest_yourls=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+          
+          if [ "${LATEST_VERSION}" != "${CURRENT_VERSION}" ]; then
+            echo "update_yourls=true" >> $GITHUB_OUTPUT
+            echo "Updating YOURLS from ${CURRENT_VERSION} to ${LATEST_VERSION}"
+            yq e -i ".version = \"$LATEST_VERSION\"" yourls/config.yaml
+          else
+            echo "update_yourls=false" >> $GITHUB_OUTPUT
+            echo "YOURLS is up-to-date."
+          fi
+
+      - name: Commit and Push Changes
+        if: steps.portainer.outputs.update_portainer == 'true' || steps.yourls.outputs.update_yourls == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          UPDATED_ADDONS=""
+          COMMIT_BODY=""
+          
+          if [ "${{ steps.portainer.outputs.update_portainer }}" == "true" ]; then
+            UPDATED_ADDONS="Portainer"
+            COMMIT_BODY="›› Portainer updated to ${{ steps.portainer.outputs.latest_portainer }}"
+            git add portainer/Dockerfile portainer/config.json portainer/CHANGELOG.md
+          fi
+          
+          if [ "${{ steps.yourls.outputs.update_yourls }}" == "true" ]; then
+            if [ -n "$UPDATED_ADDONS" ]; then
+              UPDATED_ADDONS="$UPDATED_ADDONS & YOURLS"
+              COMMIT_BODY="$COMMIT_BODY\n›› YOURLS updated to ${{ steps.yourls.outputs.latest_yourls }}"
+            else
+              UPDATED_ADDONS="YOURLS"
+              COMMIT_BODY="›› YOURLS updated to ${{ steps.yourls.outputs.latest_yourls }}"
+            fi
+            git add yourls/config.yaml
+          fi
+          
+          COMMIT_TITLE="[⬇️ • Addon-Updater] $UPDATED_ADDONS updated!"
+          git commit -m "$COMMIT_TITLE" -m "$COMMIT_BODY"
+          git push
