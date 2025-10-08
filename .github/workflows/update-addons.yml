@@ -69,8 +69,24 @@ jobs:
             echo "YOURLS is up-to-date."
           fi
 
+      - name: Update WireGuard+
+        id: wireguard
+        run: |
+          LATEST_VERSION=$(curl -sL "https://api.github.com/repos/ngoduykhanh/wireguard-ui/releases/latest" | jq -r ".tag_name" | sed 's/v//')
+          CURRENT_VERSION=$(yq e '.version' wg-ui/config.yaml)
+          echo "latest_wireguard=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+          
+          if [ "${LATEST_VERSION}" != "${CURRENT_VERSION}" ]; then
+            echo "update_wireguard=true" >> $GITHUB_OUTPUT
+            echo "Updating WireGuard+ from ${CURRENT_VERSION} to ${LATEST_VERSION}"
+            yq e -i ".version = \"$LATEST_VERSION\"" wg-ui/config.yaml
+          else
+            echo "update_wireguard=false" >> $GITHUB_OUTPUT
+            echo "WireGuard+ is up-to-date."
+          fi
+
       - name: Commit and Push Changes
-        if: steps.portainer.outputs.update_portainer == 'true' || steps.yourls.outputs.update_yourls == 'true'
+        if: steps.portainer.outputs.update_portainer == 'true' || steps.yourls.outputs.update_yourls == 'true' || steps.wireguard.outputs.update_wireguard == 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -93,6 +109,17 @@ jobs:
               COMMIT_BODY="›› YOURLS updated to ${{ steps.yourls.outputs.latest_yourls }}"
             fi
             git add yourls/config.yaml
+          fi
+
+          if [ "${{ steps.wireguard.outputs.update_wireguard }}" == "true" ]; then
+            if [ -n "$UPDATED_ADDONS" ]; then
+              UPDATED_ADDONS="$UPDATED_ADDONS & WireGuard+"
+              COMMIT_BODY="$COMMIT_BODY\n›› WireGuard+ updated to ${{ steps.wireguard.outputs.latest_wireguard }}"
+            else
+              UPDATED_ADDONS="WireGuard+"
+              COMMIT_BODY="›› WireGuard+ updated to ${{ steps.wireguard.outputs.latest_wireguard }}"
+            fi
+            git add wg-ui/config.yaml
           fi
           
           COMMIT_TITLE="[⬇️ • Addon-Updater] $UPDATED_ADDONS updated!"
