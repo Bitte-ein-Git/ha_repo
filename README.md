@@ -16,6 +16,8 @@
   |:----:|:---|
   | <img src="portainer/logo.png" width="128"> | [**Portainer**](./portainer) |
   | <img src="betterbahn/logo.png" width="128"> | [**BetterBahn**](./betterbahn) |
+  | <img src="mcbedrock/logo.png" width="128"> | [**MC Bedrock Server**](./mcbedrock) |
+  | <img src="mcxboxbroadcast/logo.png" width="128"> | [**MCXboxBroadcast**](./mcxboxbroadcast) |
   | <img src="wg-ui/icon.png" width="128"> | [**🗿• WireGuard+**](./wg-ui) |
   | <img src="og-homekit/icon.png" width="128"> | [**OG HomeKit**](./og-homekit) |
   | <img src="og-pi-hole/logo.png" width="128"> | [**OG Pi-hole DNS-Server**](./og-pi-hole) |

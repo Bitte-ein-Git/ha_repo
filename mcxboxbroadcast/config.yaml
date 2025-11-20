@@ -1,0 +1,41 @@
+name: "MCXboxBroadcast"
+version: "2.0.0"
+slug: "mcxboxbroadcast"
+description: "Broadcast a Java/Geyser server to Xbox Live Friends list."
+url: "https://github.com/MCXboxBroadcast/Broadcaster"
+startup: application
+arch:
+  - aarch64
+  - amd64
+init: false
+host_network: true
+map:
+  - config:rw
+options:
+  remote_address: "auto"
+  remote_port: "19132"
+  host_name: "Geyser Server"
+  world_name: "GeyserMC Broadcast"
+  max_players: 20
+  update_interval: 30
+  friend_sync:
+    enabled: true
+    auto_follow: true
+    auto_unfollow: true
+    initial_invite: true
+  debug_log: false
+  reset_auth: false
+schema:
+  remote_address: str
+  remote_port: str
+  host_name: str
+  world_name: str
+  max_players: int
+  update_interval: int
+  friend_sync:
+    enabled: bool
+    auto_follow: bool
+    auto_unfollow: bool
+    initial_invite: bool
+  debug_log: bool
+  reset_auth: bool
