@@ -1,6 +1,6 @@
 name: "YOURLS URL Shortener"
 description: "Your Own URL Shortener. Requires a database (e.g., MariaDB addon)."
-version: "1.10.3"
+version: "null"
 ingress: true
 ingress_stream: true
 slug: "yourls"
