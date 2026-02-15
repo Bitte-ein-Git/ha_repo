@@ -1,0 +1,81 @@
+name: "🛠️ » 📦 AppDaemon: Force Rebuild"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'appdaemon/system_packages.config'
+
+jobs:
+  force_update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install yq & jq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Rebuild AppDaemon Dockerfile
+        run: |
+          LATEST_TAG=$(curl -sL "https://api.github.com/repos/hassio-addons/addon-appdaemon/releases/latest" | jq -r ".tag_name")
+          LATEST_CLEAN="${LATEST_TAG#v}"
+          
+          echo "Fetching source for $LATEST_TAG..."
+          
+          # Backup local assets and config
+          mkdir -p /tmp/ad_backup
+          cp appdaemon/icon.png /tmp/ad_backup/ 2>/dev/null || true
+          cp appdaemon/logo.png /tmp/ad_backup/ 2>/dev/null || true
+          LOCAL_NAME=$(yq e '.name' appdaemon/config.yaml)
+          LOCAL_DESC=$(yq e '.description' appdaemon/config.yaml)
+          LOCAL_SLUG=$(yq e '.slug' appdaemon/config.yaml)
+
+          # Download and extract latest source (Robust Method)
+          curl -L "https://github.com/hassio-addons/addon-appdaemon/archive/refs/tags/${LATEST_TAG}.tar.gz" -o /tmp/ad.tar.gz
+          mkdir -p /tmp/ad_source
+          tar -xzf /tmp/ad.tar.gz -C /tmp/ad_source
+          # Find the directory, avoiding guess work
+          EXTRACTED_DIR=$(find /tmp/ad_source -maxdepth 1 -mindepth 1 -type d | head -n 1)
+          
+          # Replace codebase
+          rm -rf appdaemon/*
+          cp -r ${EXTRACTED_DIR}/appdaemon/* appdaemon/
+          
+          # Restore assets
+          cp /tmp/ad_backup/icon.png appdaemon/ 2>/dev/null || true
+          cp /tmp/ad_backup/logo.png appdaemon/ 2>/dev/null || true
+          
+          # Patch configuration
+          yq e -i ".version = \"${LATEST_CLEAN}-dev\"" appdaemon/config.yaml
+          yq e -i ".name = \"${LOCAL_NAME}\"" appdaemon/config.yaml
+          yq e -i ".description = \"${LOCAL_DESC}\"" appdaemon/config.yaml
+          yq e -i ".slug = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
+          
+          # Inject system packages
+          if [ -f "appdaemon/system_packages.config" ]; then
+            PACKAGES=$(cat appdaemon/system_packages.config | tr '\n' ' ')
+            if [ ! -z "$PACKAGES" ]; then
+              echo "Injecting system packages: $PACKAGES"
+              echo "" >> appdaemon/Dockerfile
+              echo "# Custom System Packages" >> appdaemon/Dockerfile
+              echo "RUN apk add --no-cache $PACKAGES" >> appdaemon/Dockerfile
+            fi
+          fi
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          if [[ -n $(git status -s) ]]; then
+            git add appdaemon/
+            git commit -m "[🛠️ • AppDaemon] Force rebuild / Packages updated"
+            git push
+          else
+            echo "No changes needed."
+          fi

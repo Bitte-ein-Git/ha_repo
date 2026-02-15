@@ -15,6 +15,7 @@
   | Logo | Add-on |
   |:----:|:---|
   | <img src="portainer/logo.png" width="128"> | [**Portainer**](./portainer) |
+  | <img src="appdaemon/logo.png" width="128"> | [**🗿 » AppDaemon [Mod]**](./appdaemon) |
   | <img src="betterbahn/logo.png" width="128"> | [**BetterBahn**](./betterbahn) |
   | <img src="mcbedrock/logo.png" width="128"> | [**MC Bedrock Server**](./mcbedrock) |
   | <img src="mcxboxbroadcast/logo.png" width="128"> | [**MCXboxBroadcast**](./mcxboxbroadcast) |

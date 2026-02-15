@@ -1,0 +1,70 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Home Assistant Community App: AppDaemon
+# Configures AppDaemon
+# ==============================================================================
+
+# Migrate app data from the Home Assistant config folder,
+# to the app configuration folder.
+if ! bashio::fs.file_exists '/config/appdaemon.yaml' \
+    && bashio::fs.file_exists '/homeassistant/appdaemon/appdaemon.yaml'; then
+    shopt -s dotglob
+    mv /homeassistant/appdaemon/* /config/ \
+        || bashio::exit.nok "Failed to migrate AppDaemon configuration"
+fi
+
+# Creates initial AppDaemon configuration in case it is non-existing
+if ! bashio::fs.file_exists '/config/appdaemon.yaml'; then
+    cp -R /root/appdaemon/* /config/ \
+        || bashio::exit.nok 'Failed to create initial AppDaemon configuration'
+fi
+
+# Fix authentication for existing users who don't have token or ha_key configured
+hass_plugin_exists=$(yq e 'has("appdaemon") and .appdaemon | has("plugins") and .appdaemon.plugins | has("HASS")' /config/appdaemon.yaml)
+if [[ "$hass_plugin_exists" == "true" ]]; then
+    token_exists=$(yq e '.appdaemon.plugins.HASS | has("token")' /config/appdaemon.yaml)
+    ha_key_exists=$(yq e '.appdaemon.plugins.HASS | has("ha_key")' /config/appdaemon.yaml)
+
+    if [[ "$token_exists" == "false" && "$ha_key_exists" == "false" ]]; then
+        bashio::log.info "Updating existing AppDaemon configuration to add authentication token..."
+        
+        # Add the token to the HASS plugin configuration with proper YAML tag
+        yq e '.appdaemon.plugins.HASS.token = "SUPERVISOR_TOKEN" | .appdaemon.plugins.HASS.token tag="!env_var"' -i /config/appdaemon.yaml \
+            || bashio::log.warning "Failed to update AppDaemon configuration with token"
+    fi
+fi
+    
+current_url=$(yq e '.http.url' /config/appdaemon.yaml)
+if [[ "$current_url" != "http://0.0.0.0:5050" ]]; then
+    bashio::log.info "Ensure AppDaemon HTTP URL is set to http://0.0.0.0:5050..."
+    yq e '.http.url = "http://0.0.0.0:5050"' -i /config/appdaemon.yaml \
+        || bashio::log.warning "Failed to update AppDaemon HTTP URL"
+fi
+
+# Install user configured/requested packages
+if bashio::config.has_value 'system_packages'; then
+    apk update \
+        || bashio::exit.nok 'Failed updating Alpine packages repository indexes'
+
+    for package in $(bashio::config 'system_packages'); do
+        apk add "$package" \
+            || bashio::exit.nok "Failed installing package ${package}"
+    done
+fi
+
+# Install user configured/requested Python packages
+if bashio::config.has_value 'python_packages'; then
+    for package in $(bashio::config 'python_packages'); do
+        pip3 install "$package" \
+            || bashio::exit.nok "Failed installing package ${package}"
+    done
+fi
+
+# Executes user configured/requested commands on startup
+if bashio::config.has_value 'init_commands'; then
+    while read -r cmd; do
+        eval "${cmd}" \
+            || bashio::exit.nok "Failed executing init command: ${cmd}"
+    done <<< "$(bashio::config 'init_commands')"
+fi

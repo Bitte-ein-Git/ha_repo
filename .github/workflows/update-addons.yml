@@ -14,10 +14,67 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install yq
+      - name: Install yq & jq
         run: |
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
+
+      - name: Update AppDaemon
+        id: appdaemon
+        run: |
+          LATEST_TAG=$(curl -sL "https://api.github.com/repos/hassio-addons/addon-appdaemon/releases/latest" | jq -r ".tag_name")
+          LATEST_CLEAN="${LATEST_TAG#v}"
+          CURRENT_VERSION=$(yq e '.version' appdaemon/config.yaml | sed 's/-dev//')
+          
+          echo "latest_appdaemon=${LATEST_TAG}" >> $GITHUB_OUTPUT
+          
+          if [ "${LATEST_CLEAN}" != "${CURRENT_VERSION}" ]; then
+            echo "update_appdaemon=true" >> $GITHUB_OUTPUT
+            echo "Updating AppDaemon from ${CURRENT_VERSION} to ${LATEST_TAG}..."
+            
+            # Backup local assets and config
+            mkdir -p /tmp/ad_backup
+            cp appdaemon/icon.png /tmp/ad_backup/ 2>/dev/null || true
+            cp appdaemon/logo.png /tmp/ad_backup/ 2>/dev/null || true
+            LOCAL_NAME=$(yq e '.name' appdaemon/config.yaml)
+            LOCAL_DESC=$(yq e '.description' appdaemon/config.yaml)
+            LOCAL_SLUG=$(yq e '.slug' appdaemon/config.yaml)
+            
+            # Download and extract latest source
+            curl -L "https://github.com/hassio-addons/addon-appdaemon/archive/refs/tags/${LATEST_TAG}.tar.gz" -o /tmp/ad.tar.gz
+            mkdir -p /tmp/ad_source
+            tar -xzf /tmp/ad.tar.gz -C /tmp/ad_source
+            # Find the single directory inside ad_source
+            EXTRACTED_DIR=$(find /tmp/ad_source -maxdepth 1 -mindepth 1 -type d | head -n 1)
+            
+            # Replace codebase
+            rm -rf appdaemon/*
+            # Copy content from inside the 'appdaemon' folder of the repo
+            cp -r ${EXTRACTED_DIR}/appdaemon/* appdaemon/
+            
+            # Restore assets
+            cp /tmp/ad_backup/icon.png appdaemon/ 2>/dev/null || true
+            cp /tmp/ad_backup/logo.png appdaemon/ 2>/dev/null || true
+            
+            # Patch configuration
+            yq e -i ".version = \"${LATEST_CLEAN}-dev\"" appdaemon/config.yaml
+            yq e -i ".name = \"${LOCAL_NAME}\"" appdaemon/config.yaml
+            yq e -i ".description = \"${LOCAL_DESC}\"" appdaemon/config.yaml
+            yq e -i ".slug = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
+            
+            # Inject system packages
+            if [ -f "appdaemon/system_packages.config" ]; then
+              PACKAGES=$(cat appdaemon/system_packages.config | tr '\n' ' ')
+              if [ ! -z "$PACKAGES" ]; then
+                echo "" >> appdaemon/Dockerfile
+                echo "# Custom System Packages" >> appdaemon/Dockerfile
+                echo "RUN apk add --no-cache $PACKAGES" >> appdaemon/Dockerfile
+              fi
+            fi
+          else
+            echo "update_appdaemon=false" >> $GITHUB_OUTPUT
+            echo "AppDaemon is up-to-date."
+          fi
 
       - name: Update Portainer
         id: portainer
@@ -86,7 +143,7 @@ jobs:
           fi
 
       - name: Commit and Push Changes
-        if: steps.portainer.outputs.update_portainer == 'true' || steps.yourls.outputs.update_yourls == 'true' || steps.wireguard.outputs.update_wireguard == 'true'
+        if: steps.appdaemon.outputs.update_appdaemon == 'true' || steps.portainer.outputs.update_portainer == 'true' || steps.yourls.outputs.update_yourls == 'true' || steps.wireguard.outputs.update_wireguard == 'true'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
@@ -94,34 +151,31 @@ jobs:
           UPDATED_ADDONS=""
           COMMIT_BODY=""
           
+          if [ "${{ steps.appdaemon.outputs.update_appdaemon }}" == "true" ]; then
+            UPDATED_ADDONS="AppDaemon"
+            COMMIT_BODY="›› AppDaemon updated to ${{ steps.appdaemon.outputs.latest_appdaemon }}"
+            git add appdaemon/
+          fi
+
           if [ "${{ steps.portainer.outputs.update_portainer }}" == "true" ]; then
-            UPDATED_ADDONS="Portainer"
-            COMMIT_BODY="›› Portainer updated to ${{ steps.portainer.outputs.latest_portainer }}"
-            git add portainer/Dockerfile portainer/config.json portainer/CHANGELOG.md
+            if [ -n "$UPDATED_ADDONS" ]; then UPDATED_ADDONS="$UPDATED_ADDONS & Portainer"; else UPDATED_ADDONS="Portainer"; fi
+            COMMIT_BODY="$COMMIT_BODY\n›› Portainer updated to ${{ steps.portainer.outputs.latest_portainer }}"
+            git add portainer/
           fi
           
           if [ "${{ steps.yourls.outputs.update_yourls }}" == "true" ]; then
-            if [ -n "$UPDATED_ADDONS" ]; then
-              UPDATED_ADDONS="$UPDATED_ADDONS & YOURLS"
-              COMMIT_BODY="$COMMIT_BODY\n›› YOURLS updated to ${{ steps.yourls.outputs.latest_yourls }}"
-            else
-              UPDATED_ADDONS="YOURLS"
-              COMMIT_BODY="›› YOURLS updated to ${{ steps.yourls.outputs.latest_yourls }}"
-            fi
-            git add yourls/config.yaml
+            if [ -n "$UPDATED_ADDONS" ]; then UPDATED_ADDONS="$UPDATED_ADDONS & YOURLS"; else UPDATED_ADDONS="YOURLS"; fi
+            COMMIT_BODY="$COMMIT_BODY\n›› YOURLS updated to ${{ steps.yourls.outputs.latest_yourls }}"
+            git add yourls/
           fi
 
           if [ "${{ steps.wireguard.outputs.update_wireguard }}" == "true" ]; then
-            if [ -n "$UPDATED_ADDONS" ]; then
-              UPDATED_ADDONS="$UPDATED_ADDONS & WireGuard+"
-              COMMIT_BODY="$COMMIT_BODY\n›› WireGuard+ updated to ${{ steps.wireguard.outputs.latest_wireguard }}"
-            else
-              UPDATED_ADDONS="WireGuard+"
-              COMMIT_BODY="›› WireGuard+ updated to ${{ steps.wireguard.outputs.latest_wireguard }}"
-            fi
-            git add wg-ui/config.yaml
+            if [ -n "$UPDATED_ADDONS" ]; then UPDATED_ADDONS="$UPDATED_ADDONS & WireGuard+"; else UPDATED_ADDONS="WireGuard+"; fi
+            COMMIT_BODY="$COMMIT_BODY\n›› WireGuard+ updated to ${{ steps.wireguard.outputs.latest_wireguard }}"
+            git add wg-ui/
           fi
           
           COMMIT_TITLE="[⬇️ • Addon-Updater] $UPDATED_ADDONS updated!"
+          COMMIT_BODY=$(echo -e "$COMMIT_BODY")
           git commit -m "$COMMIT_TITLE" -m "$COMMIT_BODY"
           git push
