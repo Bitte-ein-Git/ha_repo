@@ -1,0 +1,23 @@
+name: "🔊 Shairport-Sync Web"
+description: "AirPlay receiver • HTTP audio + metadata output"
+version: "1.0.0-dev"
+slug: "airplay_web"
+
+arch:
+  - amd64
+  - aarch64
+  - armv7
+
+startup: services
+boot: auto
+host_network: true
+
+build: .
+
+options:
+  name: "HomeAssistant"
+  port: 8090
+
+schema:
+  name: str
+  port: int

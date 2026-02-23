@@ -174,8 +174,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-[addon-badge]: https://ha-link.heyfordy.de/badges/supervisor_addon.svg
-[addon]: https://ha-link.heyfordy.de/redirect/supervisor_addon/?addon=38ad0bcc_appdaemon_mod&repository_url=https%3A%2F%2Fgithub.com%2FBitte-ein-Git%2Fha_repo
+[addon-badge]: https://ha-link.heyfordy.dev/badges/supervisor_addon.svg
+[addon]: https://ha-link.heyfordy.dev/redirect/supervisor_addon/?addon=38ad0bcc_appdaemon_mod&repository_url=https%3A%2F%2Fgithub.com%2FBitte-ein-Git%2Fha_repo
 [alpine-packages]: https://pkgs.alpinelinux.org/packages
 [appdaemon]: https://appdaemon.readthedocs.io
 [contributors]: https://github.com/hassio-addons/app-appdaemon/graphs/contributors
