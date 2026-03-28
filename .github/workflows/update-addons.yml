@@ -32,13 +32,16 @@ jobs:
             echo "update_appdaemon=true" >> $GITHUB_OUTPUT
             echo "Updating AppDaemon from ${CURRENT_VERSION} to ${LATEST_TAG}..."
             
-            # Backup local assets and config
-            mkdir -p /tmp/ad_backup
-            cp appdaemon/icon.png /tmp/ad_backup/ 2>/dev/null || true
-            cp appdaemon/logo.png /tmp/ad_backup/ 2>/dev/null || true
-            LOCAL_NAME=$(yq e '.name' appdaemon/config.yaml)
-            LOCAL_DESC=$(yq e '.description' appdaemon/config.yaml)
-            LOCAL_SLUG=$(yq e '.slug' appdaemon/config.yaml)
+          # Backup local README/DOCS, assets and config
+          mkdir -p /tmp/ad_backup
+          cp appdaemon/icon.png /tmp/ad_backup/ 2>/dev/null || true
+          cp appdaemon/logo.png /tmp/ad_backup/ 2>/dev/null || true
+          cp appdaemon/DOCS.md /tmp/ad_backup/ 2>/dev/null || true
+          cp appdaemon/README.md /tmp/ad_backup/ 2>/dev/null || true
+          LOCAL_NAME=$(yq e '.name' appdaemon/config.yaml)
+          LOCAL_DESC=$(yq e '.description' appdaemon/config.yaml)
+          LOCAL_SLUG=$(yq e '.slug' appdaemon/config.yaml)
+          LOCAL_SLUG=$(yq e '.url' appdaemon/config.yaml)
             
             # Download and extract latest source
             curl -L "https://github.com/hassio-addons/addon-appdaemon/archive/refs/tags/${LATEST_TAG}.tar.gz" -o /tmp/ad.tar.gz
@@ -52,15 +55,18 @@ jobs:
             # Copy content from inside the 'appdaemon' folder of the repo
             cp -r ${EXTRACTED_DIR}/appdaemon/* appdaemon/
             
-            # Restore assets
-            cp /tmp/ad_backup/icon.png appdaemon/ 2>/dev/null || true
-            cp /tmp/ad_backup/logo.png appdaemon/ 2>/dev/null || true
-            
-            # Patch configuration
-            yq e -i ".version = \"${LATEST_CLEAN}-dev\"" appdaemon/config.yaml
-            yq e -i ".name = \"${LOCAL_NAME}\"" appdaemon/config.yaml
-            yq e -i ".description = \"${LOCAL_DESC}\"" appdaemon/config.yaml
-            yq e -i ".slug = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
+          # Restore README/DOCS and assets
+          cp /tmp/ad_backup/icon.png appdaemon/ 2>/dev/null || true
+          cp /tmp/ad_backup/logo.png appdaemon/ 2>/dev/null || true
+          cp /tmp/ad_backup/DOCS.md appdaemon/ 2>/dev/null || true
+          cp /tmp/ad_backup/README.md appdaemon/ 2>/dev/null || true
+          
+          # Patch configuration
+          yq e -i ".version = \"${LATEST_CLEAN}-dev\"" appdaemon/config.yaml
+          yq e -i ".name = \"${LOCAL_NAME}\"" appdaemon/config.yaml
+          yq e -i ".description = \"${LOCAL_DESC}\"" appdaemon/config.yaml
+          yq e -i ".slug = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
+          yq e -i ".url = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
             
             # Inject system packages
             if [ -f "appdaemon/system_packages.config" ]; then
