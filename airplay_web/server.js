@@ -1,15 +1,30 @@
 const http = require('http');
 const fs = require('fs');
+// safe routing module
+const url = require('url');
 
 const port = process.argv[2] || 8090;
 let clients = [];
 
-// removed clientName, initialized empty state
 let currentMeta = { isPlaying: false, title: null, artist: null, album: null };
 let currentCover = null;
 
 const server = http.createServer((req, res) => {
-    if (req.url === '/stream') {
+    // allow cross-origin requests for web radio fetch
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // handle preflight requests
+    if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        return res.end();
+    }
+
+    // parse pathname to ignore potential query params
+    const parsedUrl = url.parse(req.url).pathname;
+
+    if (parsedUrl === '/stream') {
         res.writeHead(200, {
             'Content-Type': 'audio/mpeg',
             'Transfer-Encoding': 'chunked',
@@ -23,11 +38,11 @@ const server = http.createServer((req, res) => {
             clients = clients.filter(c => c !== res);
         });
 
-    } else if (req.url === '/meta') {
+    } else if (parsedUrl === '/meta') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(currentMeta));
 
-    } else if (req.url === '/cover') {
+    } else if (parsedUrl === '/cover') {
         if (currentCover) {
             res.writeHead(200, { 'Content-Type': 'image/jpeg' });
             res.end(currentCover);
