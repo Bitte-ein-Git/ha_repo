@@ -22,6 +22,6 @@ echo "Starting shairport-sync..."
 shairport-sync -c /etc/shairport-sync.conf &
 
 echo "Starting FFmpeg and Node server..."
-# encode to 320kbps mp3 for max quality and universal browser compatibility
-ffmpeg -loglevel error -f s16le -ar 44100 -ac 2 -i /tmp/audio_fifo \
-    -c:a libmp3lame -b:a 320k -f mp3 - | node /app/server.js $PORT
+# disable ffmpeg buffering and force immediate packet flushing for low latency
+ffmpeg -loglevel error -fflags nobuffer -flags low_delay -f s16le -ar 44100 -ac 2 -i /tmp/audio_fifo \
+    -c:a libmp3lame -b:a 320k -flush_packets 1 -f mp3 - | node /app/server.js $PORT

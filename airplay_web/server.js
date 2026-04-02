@@ -1,6 +1,5 @@
 const http = require('http');
 const fs = require('fs');
-// safe routing module
 const url = require('url');
 
 const port = process.argv[2] || 8090;
@@ -15,21 +14,23 @@ const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    // handle preflight requests
     if (req.method === 'OPTIONS') {
         res.writeHead(200);
         return res.end();
     }
 
-    // parse pathname to ignore potential query params
     const parsedUrl = url.parse(req.url).pathname;
 
     if (parsedUrl === '/stream') {
+        // disable nagle's algorithm for instant tcp packet transmission
+        req.socket.setNoDelay(true);
+
         res.writeHead(200, {
             'Content-Type': 'audio/mpeg',
             'Transfer-Encoding': 'chunked',
             'Connection': 'keep-alive',
-            'Cache-Control': 'no-cache'
+            // force browser to drop caching and buffering attempts completely
+            'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
         });
 
         clients.push(res);
@@ -73,13 +74,9 @@ const parseMetadata = (xmlString) => {
     
     const code = Buffer.from(codeMatch[1], 'hex').toString('utf8');
     
-    // set playing state
     if (code === 'pbeg' || code === 'prsm') currentMeta.isPlaying = true;
-    
-    // pause without clearing metadata
     if (code === 'pfls') currentMeta.isPlaying = false;
     
-    // clear metadata on disconnect or stream end
     if (code === 'pend') {
         currentMeta.isPlaying = false;
         currentMeta.title = null;
@@ -93,7 +90,6 @@ const parseMetadata = (xmlString) => {
     
     const data = Buffer.from(dataMatch[1].replace(/\s/g, ''), 'base64');
     
-    // parse actual metadata
     if (code === 'minm') currentMeta.title = data.toString('utf8');
     if (code === 'asar') currentMeta.artist = data.toString('utf8');
     if (code === 'asal') currentMeta.album = data.toString('utf8');
