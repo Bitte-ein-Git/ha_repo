@@ -1,4 +1,4 @@
-ARG BUILD_FROM=ghcr.io/hassio-addons/base:20.0.1
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:20.1.1
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}
 
@@ -16,13 +16,13 @@ COPY rootfs/patches /patches
 RUN \
     apk add --no-cache --virtual .build-dependencies \
         build-base=0.5-r3 \
-        python3-dev=3.12.12-r0 \
+        python3-dev=3.12.13-r0 \
     \
     && apk add --no-cache \
         py3-pip=25.1.1-r1 \
-        py3-wheel=0.46.1-r0 \
-        python3=3.12.12-r0 \
-        yq-go=4.49.2-r3 \
+        py3-wheel=0.46.3-r0 \
+        python3=3.12.13-r0 \
+        yq-go=4.49.2-r5 \
     \
     && pip install -r /tmp/requirements.txt \
     \
