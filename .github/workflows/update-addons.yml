@@ -30,45 +30,42 @@ jobs:
           
           if [ "${LATEST_CLEAN}" != "${CURRENT_VERSION}" ]; then
             echo "update_appdaemon=true" >> $GITHUB_OUTPUT
-            echo "Updating AppDaemon from ${CURRENT_VERSION} to ${LATEST_TAG}..."
             
-          # Backup local README/DOCS, assets and config
-          mkdir -p /tmp/ad_backup
-          cp appdaemon/icon.png /tmp/ad_backup/ 2>/dev/null || true
-          cp appdaemon/logo.png /tmp/ad_backup/ 2>/dev/null || true
-          cp appdaemon/DOCS.md /tmp/ad_backup/ 2>/dev/null || true
-          cp appdaemon/README.md /tmp/ad_backup/ 2>/dev/null || true
-          LOCAL_NAME=$(yq e '.name' appdaemon/config.yaml)
-          LOCAL_DESC=$(yq e '.description' appdaemon/config.yaml)
-          LOCAL_SLUG=$(yq e '.slug' appdaemon/config.yaml)
-          LOCAL_SLUG=$(yq e '.url' appdaemon/config.yaml)
+            # Create backup of local assets and configuration
+            mkdir -p /tmp/ad_backup
+            cp appdaemon/icon.png /tmp/ad_backup/ 2>/dev/null || true
+            cp appdaemon/logo.png /tmp/ad_backup/ 2>/dev/null || true
+            cp appdaemon/DOCS.md /tmp/ad_backup/ 2>/dev/null || true
+            cp appdaemon/README.md /tmp/ad_backup/ 2>/dev/null || true
+            LOCAL_NAME=$(yq e '.name' appdaemon/config.yaml)
+            LOCAL_DESC=$(yq e '.description' appdaemon/config.yaml)
+            LOCAL_SLUG=$(yq e '.slug' appdaemon/config.yaml)
+            LOCAL_URL=$(yq e '.url' appdaemon/config.yaml)
             
-            # Download and extract latest source
+            # Fetch and extract latest addon source
             curl -L "https://github.com/hassio-addons/addon-appdaemon/archive/refs/tags/${LATEST_TAG}.tar.gz" -o /tmp/ad.tar.gz
             mkdir -p /tmp/ad_source
             tar -xzf /tmp/ad.tar.gz -C /tmp/ad_source
-            # Find the single directory inside ad_source
             EXTRACTED_DIR=$(find /tmp/ad_source -maxdepth 1 -mindepth 1 -type d | head -n 1)
             
-            # Replace codebase
+            # Clean and sync codebase
             rm -rf appdaemon/*
-            # Copy content from inside the 'appdaemon' folder of the repo
             cp -r ${EXTRACTED_DIR}/appdaemon/* appdaemon/
             
-          # Restore README/DOCS and assets
-          cp /tmp/ad_backup/icon.png appdaemon/ 2>/dev/null || true
-          cp /tmp/ad_backup/logo.png appdaemon/ 2>/dev/null || true
-          cp /tmp/ad_backup/DOCS.md appdaemon/ 2>/dev/null || true
-          cp /tmp/ad_backup/README.md appdaemon/ 2>/dev/null || true
-          
-          # Patch configuration
-          yq e -i ".version = \"${LATEST_CLEAN}-dev\"" appdaemon/config.yaml
-          yq e -i ".name = \"${LOCAL_NAME}\"" appdaemon/config.yaml
-          yq e -i ".description = \"${LOCAL_DESC}\"" appdaemon/config.yaml
-          yq e -i ".slug = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
-          yq e -i ".url = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
+            # Restore local assets and metadata
+            cp /tmp/ad_backup/icon.png appdaemon/ 2>/dev/null || true
+            cp /tmp/ad_backup/logo.png appdaemon/ 2>/dev/null || true
+            cp /tmp/ad_backup/DOCS.md appdaemon/ 2>/dev/null || true
+            cp /tmp/ad_backup/README.md appdaemon/ 2>/dev/null || true
             
-            # Inject system packages
+            # Update configuration with local values and new version
+            yq e -i ".version = \"${LATEST_CLEAN}-dev\"" appdaemon/config.yaml
+            yq e -i ".name = \"${LOCAL_NAME}\"" appdaemon/config.yaml
+            yq e -i ".description = \"${LOCAL_DESC}\"" appdaemon/config.yaml
+            yq e -i ".slug = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
+            yq e -i ".url = \"${LOCAL_URL}\"" appdaemon/config.yaml
+            
+            # Re-inject custom system packages into Dockerfile
             if [ -f "appdaemon/system_packages.config" ]; then
               PACKAGES=$(cat appdaemon/system_packages.config | tr '\n' ' ')
               if [ ! -z "$PACKAGES" ]; then
@@ -79,7 +76,6 @@ jobs:
             fi
           else
             echo "update_appdaemon=false" >> $GITHUB_OUTPUT
-            echo "AppDaemon is up-to-date."
           fi
 
       - name: Update Portainer
@@ -91,17 +87,14 @@ jobs:
           
           if [ "${LATEST_VERSION}" != "${CURRENT_VERSION}" ]; then
             echo "update_portainer=true" >> $GITHUB_OUTPUT
-            echo "Updating Portainer from ${CURRENT_VERSION} to ${LATEST_VERSION}"
+            
+            # Update version in Dockerfile and config
             sed -i "s/${CURRENT_VERSION}/${LATEST_VERSION}/g" portainer/Dockerfile
             jq --arg new_version "$LATEST_VERSION" '.version = $new_version' portainer/config.json > tmp.$$.json && mv tmp.$$.json portainer/config.json
             
-            # Fetch and process changelog
+            # Generate changelog from GitHub release body
             CHANGELOG_BODY=$(curl -sL "https://api.github.com/repos/portainer/portainer/releases/latest" | jq -r ".body")
-            
-            # Extract Deprecated Features
             DEPRECATED=$(echo "$CHANGELOG_BODY" | sed -n '/^\*\*Deprecated features\*\*/,/^\*\*Removed features\*\*/p' | sed '1d;$d')
-            
-            # Extract Changes
             CHANGES=$(echo "$CHANGELOG_BODY" | sed -n '/^## Changes:/,/^## /p' | sed '1d;$d')
             
             {
@@ -113,23 +106,6 @@ jobs:
             } > portainer/CHANGELOG.md
           else
             echo "update_portainer=false" >> $GITHUB_OUTPUT
-            echo "Portainer is up-to-date."
-          fi
-
-      - name: Update YOURLS
-        id: yourls
-        run: |
-          LATEST_VERSION=$(curl -sL "https://api.github.com/repos/YOURLS/YOURLS/releases/latest" | jq -r ".tag_name")
-          CURRENT_VERSION=$(yq e '.version' yourls/config.yaml)
-          echo "latest_yourls=${LATEST_VERSION}" >> $GITHUB_OUTPUT
-          
-          if [ "${LATEST_VERSION}" != "${CURRENT_VERSION}" ]; then
-            echo "update_yourls=true" >> $GITHUB_OUTPUT
-            echo "Updating YOURLS from ${CURRENT_VERSION} to ${LATEST_VERSION}"
-            yq e -i ".version = \"$LATEST_VERSION\"" yourls/config.yaml
-          else
-            echo "update_yourls=false" >> $GITHUB_OUTPUT
-            echo "YOURLS is up-to-date."
           fi
 
       - name: Update WireGuard+
@@ -141,46 +117,43 @@ jobs:
           
           if [ "${LATEST_VERSION}" != "${CURRENT_VERSION}" ]; then
             echo "update_wireguard=true" >> $GITHUB_OUTPUT
-            echo "Updating WireGuard+ from ${CURRENT_VERSION} to ${LATEST_VERSION}"
             yq e -i ".version = \"$LATEST_VERSION\"" wg-ui/config.yaml
           else
             echo "update_wireguard=false" >> $GITHUB_OUTPUT
-            echo "WireGuard+ is up-to-date."
           fi
 
       - name: Commit and Push Changes
-        if: steps.appdaemon.outputs.update_appdaemon == 'true' || steps.portainer.outputs.update_portainer == 'true' || steps.yourls.outputs.update_yourls == 'true' || steps.wireguard.outputs.update_wireguard == 'true'
+        if: steps.appdaemon.outputs.update_appdaemon == 'true' || steps.portainer.outputs.update_portainer == 'true' || steps.wireguard.outputs.update_wireguard == 'true'
         run: |
+          # Set up git bot identity
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           
           UPDATED_ADDONS=""
           COMMIT_BODY=""
           
+          # Stage AppDaemon changes
           if [ "${{ steps.appdaemon.outputs.update_appdaemon }}" == "true" ]; then
             UPDATED_ADDONS="AppDaemon"
             COMMIT_BODY="›› AppDaemon updated to ${{ steps.appdaemon.outputs.latest_appdaemon }}"
             git add appdaemon/
           fi
 
+          # Stage Portainer changes
           if [ "${{ steps.portainer.outputs.update_portainer }}" == "true" ]; then
             if [ -n "$UPDATED_ADDONS" ]; then UPDATED_ADDONS="$UPDATED_ADDONS & Portainer"; else UPDATED_ADDONS="Portainer"; fi
             COMMIT_BODY="$COMMIT_BODY\n›› Portainer updated to ${{ steps.portainer.outputs.latest_portainer }}"
             git add portainer/
           fi
-          
-          if [ "${{ steps.yourls.outputs.update_yourls }}" == "true" ]; then
-            if [ -n "$UPDATED_ADDONS" ]; then UPDATED_ADDONS="$UPDATED_ADDONS & YOURLS"; else UPDATED_ADDONS="YOURLS"; fi
-            COMMIT_BODY="$COMMIT_BODY\n›› YOURLS updated to ${{ steps.yourls.outputs.latest_yourls }}"
-            git add yourls/
-          fi
 
+          # Stage WireGuard changes
           if [ "${{ steps.wireguard.outputs.update_wireguard }}" == "true" ]; then
             if [ -n "$UPDATED_ADDONS" ]; then UPDATED_ADDONS="$UPDATED_ADDONS & WireGuard+"; else UPDATED_ADDONS="WireGuard+"; fi
             COMMIT_BODY="$COMMIT_BODY\n›› WireGuard+ updated to ${{ steps.wireguard.outputs.latest_wireguard }}"
             git add wg-ui/
           fi
           
+          # Finalize commit and push
           COMMIT_TITLE="[⬇️ • Addon-Updater] $UPDATED_ADDONS updated!"
           COMMIT_BODY=$(echo -e "$COMMIT_BODY")
           git commit -m "$COMMIT_TITLE" -m "$COMMIT_BODY"
