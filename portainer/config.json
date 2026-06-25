@@ -1,6 +1,6 @@
 {
   "name": "Portainer",
-  "version": "2.39.3",
+  "version": "2.39.4",
   "slug": "portainer",
   "description": "Portainer: web-gui for your Docker environment!",
   "url": "https://github.com/bitte-ein-git/ha_repo/",
