@@ -1,0 +1,33 @@
+name: "🎬 Pelagica"
+description: "Alternative Jellyfin Frontend"
+version: "1.0.1"
+slug: "pelagica"
+homeassistant: "2024.1.0"
+
+arch:
+  - amd64
+  - aarch64
+  - armv7
+
+startup: services
+boot: auto
+
+options:
+  port: 3000
+  log_level: info
+
+schema:
+  port: port
+  log_level: match(debug|info|warning|error)
+
+ingress: true
+ingress_port: 3000
+panel_icon: "mdi:movie"
+panel_title: "Pelagica"
+panel_admin: false
+
+ports:
+  3000/tcp: 3000
+
+ports_description:
+  3000/tcp: "Pelagica Web Interface"
