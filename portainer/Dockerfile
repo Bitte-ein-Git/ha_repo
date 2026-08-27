@@ -14,7 +14,7 @@ RUN \
     && if [ "${BUILD_ARCH}" = "amd64" ]; then ARCH="amd64"; fi \
     \
     && curl -L -s \
-        "https://github.com/portainer/portainer/releases/download/2.39.6/portainer-2.39.6-linux-${ARCH}.tar.gz" \
+        "https://github.com/portainer/portainer/releases/download/2.45.0/portainer-2.45.0-linux-${ARCH}.tar.gz" \
         | tar zxvf - -C /opt/
         
 # Copy root filesystem
