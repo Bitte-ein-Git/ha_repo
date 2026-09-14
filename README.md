@@ -31,12 +31,16 @@
 > Everything is **work in progress**! Most stuff won't work or runs **unstable**!
 
 ## Installation (Easy)
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://ha-link.heyfordy.dev/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2FBitte-ein-Git%2Fha_repo)
+
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://ha-link.heyfordy.dev/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https://addons.heyfordy.dev)
+
 ## Installation (Manual)
+
 » Add this Repository to Home Assistant:
-   - Settings > Add-Ons > Add-On Store
-   - <img src="assets/menu.svg" alt="3 dots" width="25" style="vertical-align:center"/> _(top right corner)_ > Repositories > Enter URL: `https://ha-addons.heyfordy.dev`
-   - **+ Add**
+
+-   Settings > Add-Ons > Add-On Store
+-   <img src="assets/menu.svg" alt="3 dots" width="25" style="vertical-align:center"/> _(top right corner)_ > Repositories > Enter URL: `https://addons.heyfordy.dev`
+-   **+ Add**
 
 ---
 
