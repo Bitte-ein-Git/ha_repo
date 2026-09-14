@@ -32,7 +32,7 @@
 
 ## Installation (Easy)
 
-[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://ha-link.heyfordy.dev/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https://addons.heyfordy.dev)
+[![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://ha-link.heyfordy.dev/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Faddons.heyfordy.dev%2F)
 
 ## Installation (Manual)
 
