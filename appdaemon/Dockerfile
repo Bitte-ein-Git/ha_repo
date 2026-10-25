@@ -1,6 +1,6 @@
-ARG BUILD_FROM=ghcr.io/hassio-addons/debian-base:9.4.0
+ARG BUILD_FROM=ghcr.io/hassio-addons/debian-base:9.5.1
 # hadolint ignore=DL3006
-FROM ghcr.io/astral-sh/uv:0.12.7 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.5 AS uv
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}
 
@@ -25,7 +25,7 @@ COPY rootfs/patches /patches
 # Setup base
 ARG BUILD_ARCH=amd64
 ARG PYTHON_VERSION="3.13"
-ARG YQ_VERSION="v4.53.6"
+ARG YQ_VERSION="v4.54.1"
 # hadolint ignore=DL3003,DL3008
 RUN \
     apt-get update \
