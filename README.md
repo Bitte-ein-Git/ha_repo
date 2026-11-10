@@ -20,7 +20,7 @@
   | <img src="betterbahn/logo.png" width="128"> | [**BetterBahn**](./betterbahn) |
   | <img src="mcbedrock/logo.png" width="128"> | [**MC Bedrock Server**](./mcbedrock) |
   | <img src="mcxboxbroadcast/logo.png" width="128"> | [**MCXboxBroadcast**](./mcxboxbroadcast) |
-  | <img src="og-homekit/icon.png" width="128"> | [**OG HomeKit**](./og-homekit) |
+  | <img src="greenlight/icon.png" width="128"> | [**Greenlight headless**](./greenlight) |
   | <img src="og-pi-hole/logo.png" width="128"> | [**OG Pi-hole DNS-Server**](./og-pi-hole) |
 
 </details>

@@ -1,0 +1,22 @@
+configuration:
+  webui_port:
+    name: WebUI Port
+    description: Port the Greenlight web interface listens on inside the container (and is mapped to the host).
+  webui_access_secret:
+    name: Access Secret
+    description: Optional secret. When set, clients must open the UI with ?secret=...
+  pwa_name:
+    name: PWA Name
+    description: Full name shown when adding the page as a home-screen app.
+  pwa_short_name:
+    name: PWA Short Name
+    description: Short name under the home-screen icon.
+  pwa_theme_color:
+    name: PWA Theme Color
+    description: Theme / status-bar color (hex, e.g. #107C10).
+  pwa_background_color:
+    name: PWA Background Color
+    description: Splash-screen background color.
+  pwa_display:
+    name: PWA Display Mode
+    description: How the app is presented (standalone recommended for phone home-screen).

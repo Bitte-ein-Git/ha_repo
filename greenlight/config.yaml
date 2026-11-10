@@ -1,0 +1,41 @@
+name: Greenlight headless
+version: "1.1.0"
+slug: greenlight
+description: >-
+  Xbox Remote Play and xCloud.
+url: "https://github.com/pccr10001/greenlight-webonly"
+arch:
+  - aarch64
+  - amd64
+init: false
+startup: application
+boot: auto
+ports:
+  9003/tcp: 9003
+ports_description:
+  9003/tcp: "Greenlight WebUI"
+map:
+  - type: data
+    read_only: false
+webui: "http://[HOST]:[PORT:9003]"
+options:
+  webui_port: 9003
+  webui_access_secret: ""
+  pwa_name: "Xbox Remote Play"
+  pwa_short_name: "Xbox Play"
+  pwa_theme_color: "#107C10"
+  pwa_background_color: "#000000"
+  pwa_display: "standalone"
+schema:
+  webui_port: port
+  webui_access_secret: str?
+  pwa_name: str
+  pwa_short_name: str
+  pwa_theme_color: str
+  pwa_background_color: str
+  pwa_display: list(fullscreen|standalone|minimal-ui|browser)
+environment:
+  NODE_ENV: production
+ingress: false
+panel_icon: mdi:microsoft-xbox
+panel_title: Greenlight
