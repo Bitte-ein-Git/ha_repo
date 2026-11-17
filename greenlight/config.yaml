@@ -1,8 +1,8 @@
 name: Greenlight headless
-version: "1.1.0"
+version: "1.2.3"
 slug: greenlight
 description: >-
-  Xbox Remote Play and xCloud.
+  Xbox Remote Play (mobile-friendly Greenlight WebUI) as Home Assistant add-on.
 url: "https://github.com/pccr10001/greenlight-webonly"
 arch:
   - aarch64
@@ -22,7 +22,7 @@ options:
   webui_port: 9003
   webui_access_secret: ""
   pwa_name: "Xbox Remote Play"
-  pwa_short_name: "Xbox Play"
+  pwa_short_name: "RemotePlay"
   pwa_theme_color: "#107C10"
   pwa_background_color: "#000000"
   pwa_display: "standalone"

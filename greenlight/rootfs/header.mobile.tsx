@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import Ipc from '../lib/ipc'
 
 interface HeaderProps {
@@ -11,138 +12,49 @@ interface HeaderProps {
 function Header({
     hidden = false,
     gamertag,
-    level = 0,
 }: HeaderProps) {
+    const router = useRouter()
+    const path = router.pathname || ''
 
-    const [headerLinks, setHeaderLinks] = React.useState([])
-    const [mobileNavOpen, setMobileNavOpen] = React.useState(false)
-
-    function createLinks(level){
-        return (level > 1) ? [
-            {
-                name: 'My Consoles',
-                title: 'View consoles',
-                url: '/home',
-                active: false,
-            }, {
-                name: 'xCloud Library',
-                title: 'Browse xCloud library',
-                url: '/xcloud/home',
-                active: false,
-            }, {
-                name: 'Settings',
-                title: 'Change application settings',
-                url: '/settings/home',
-                active: false,
-            }, {
-                name: gamertag,
-                title: 'View profile',
-                url: '/profile',
-                active: false,
-            },
-        ] : [
-            {
-                name: 'My Consoles',
-                title: 'View consoles',
-                url: '/home',
-                active: false,
-            }, {
-                name: 'Settings',
-                title: 'Change application settings',
-                url: '/settings/home',
-                active: false,
-            }, {
-                name: gamertag,
-                title: 'View profile',
-                url: '/profile',
-                active: false,
-            },
-        ]
-    }
-
-    function setMenuActive(id) {
-        const links = createLinks(level)
-        links[id].active = true
-        setHeaderLinks(links)
-        setMobileNavOpen(false)
-        return null
-    }
-
-    function drawMenu() {
-        const linksHtml = []
-
-        for(const link in headerLinks){
-            linksHtml.push(<li key={ link }>
-                <Link legacyBehavior href={ headerLinks[link].url } key={ headerLinks[link].url }>
-                    <a title={ headerLinks[link].title } onClick={ () => {
-                        setMenuActive(link)
-                    } } className={headerLinks[link].active === true ? 'active' : ''}>{ headerLinks[link].name }</a>
-                </Link>
-            </li>)
-        }
-
-        return linksHtml
-    }
+    const isConsoles = path === '/home' || path.startsWith('/stream')
+    const isSettings = path.startsWith('/settings') || path.startsWith('/profile')
 
     function confirmQuit() {
-        if(window.Greenlight && window.Greenlight.isWebUI && window.Greenlight.isWebUI() === true)
+        if (window.Greenlight && window.Greenlight.isWebUI && window.Greenlight.isWebUI() === true)
             return
-    
-        if(confirm('Are you sure you want to quit?')){
+        if (confirm('Are you sure you want to quit?')) {
             Ipc.send('app', 'quit')
         }
     }
 
-    function toggleMobileNav() {
-        setMobileNavOpen(!mobileNavOpen)
-    }
-
-    React.useEffect(() => {
-        if(headerLinks.length <= 0 && !isNaN(level)){
-            const links = createLinks(level)
-            links[0].active = true
-            setHeaderLinks(links)
-        }
-    })
-
-    React.useEffect(() => {
-        function onResize() {
-            if (window.innerWidth > 768) {
-                setMobileNavOpen(false)
-            }
-        }
-        window.addEventListener('resize', onResize)
-        return () => window.removeEventListener('resize', onResize)
-    }, [])
-  
-    const headerClass = [
-        hidden === true ? 'disabled' : '',
-        mobileNavOpen ? 'mobile-nav-open' : '',
-    ].filter(Boolean).join(' ')
+    if (hidden) return null
 
     return (
         <React.Fragment>
-            <div id="component_header" className={headerClass}>
-                <a onClick={ confirmQuit } id="actionBarLogo" title="Home">
+            <div id="component_header" className="rp-topbar">
+                <a onClick={confirmQuit} id="actionBarLogo" title="Home" className="rp-logo">
                     <i className="fa-brands fa-xbox"></i>
                 </a>
-
-                <button
-                    type="button"
-                    className="mobile-menu-toggle"
-                    aria-label="Toggle menu"
-                    aria-expanded={mobileNavOpen}
-                    onClick={toggleMobileNav}
-                >
-                    <i className={mobileNavOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars'}></i>
-                </button>
-
-                <div className="mobile-nav-overlay" onClick={() => setMobileNavOpen(false)} />
-
-                <ul className="menu">
-                    { drawMenu() }
-                </ul>
+                <div className="rp-topbar-title">RemotePlay</div>
+                <div className="rp-topbar-user" title={gamertag || ''}>
+                    <span className="rp-gamertag">{gamertag || ''}</span>
+                </div>
             </div>
+
+            <nav id="rp_bottom_nav" className="rp-bottom-nav" aria-label="Main">
+                <Link legacyBehavior href="/home">
+                    <a className={isConsoles ? 'active' : ''} title="Consoles">
+                        <i className="fa-solid fa-gamepad"></i>
+                        <span>Consoles</span>
+                    </a>
+                </Link>
+                <Link legacyBehavior href="/settings/home">
+                    <a className={isSettings ? 'active' : ''} title="Settings">
+                        <i className="fa-solid fa-gear"></i>
+                        <span>Settings</span>
+                    </a>
+                </Link>
+            </nav>
         </React.Fragment>
     )
 }

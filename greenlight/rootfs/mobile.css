@@ -1,8 +1,19 @@
-/* Greenlight – Mobile / responsive layout
-   Breakpoints: phone <= 768px, small tablet <= 1024px
-*/
+/* RemotePlay – mobile-first UI (HA addon) */
 
-/* ---------- Base mobile improvements ---------- */
+:root {
+  --rp-green: #107c10;
+  --rp-green-bright: #1a9b1a;
+  --rp-bg: #0b0c0e;
+  --rp-card: rgba(20, 22, 28, 0.92);
+  --rp-border: rgba(255, 255, 255, 0.08);
+  --rp-text: #f2f2f2;
+  --rp-muted: rgba(255, 255, 255, 0.55);
+  --rp-topbar: 56px;
+  --rp-bottomnav: 64px;
+  --rp-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --rp-safe-top: env(safe-area-inset-top, 0px);
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -10,276 +21,293 @@ html {
 
 body {
   overscroll-behavior-y: none;
+  background: var(--rp-bg) !important;
 }
 
-/* Safer touch targets */
-@media (max-width: 1024px) {
-  button,
-  a,
-  .btn,
-  input,
-  select {
-    min-height: 44px;
-  }
+/* Full width – no friends sidebar */
+div#app_body {
+  width: 100vw !important;
+  height: auto !important;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* ---------- Header + hamburger ---------- */
-#component_header .mobile-menu-toggle {
-  display: none;
-  float: right;
-  background: transparent;
-  border: none;
+div#app_body_container {
+  padding-top: calc(var(--rp-topbar) + var(--rp-safe-top)) !important;
+  padding-bottom: calc(var(--rp-bottomnav) + var(--rp-safe-bottom) + 16px) !important;
+  padding-left: 12px;
+  padding-right: 12px;
+  max-width: 640px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+div#app_sidebar {
+  display: none !important;
+}
+
+#component_footer {
+  display: none !important;
+}
+
+/* Top bar */
+#component_header.rp-topbar,
+.rp-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--rp-topbar) + var(--rp-safe-top));
+  padding-top: var(--rp-safe-top);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 8px;
+  padding-right: 12px;
+  background: rgba(10, 12, 16, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--rp-border);
+  z-index: 100;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.rp-topbar .rp-logo,
+#component_header a#actionBarLogo {
+  float: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   color: #fff;
-  font-size: 28px;
-  padding: 18px 16px;
-  cursor: pointer;
-  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.rp-topbar .rp-logo i,
+#component_header a#actionBarLogo i {
+  padding: 0 !important;
+  font-size: 26px !important;
+  opacity: 0.95;
+  color: var(--rp-green-bright);
+}
+
+.rp-topbar-title {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--rp-text);
+}
+
+.rp-topbar-user {
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--rp-muted);
+}
+
+#component_header ul.menu {
+  display: none !important;
+}
+
+#component_header .mobile-menu-toggle {
+  display: none !important;
+}
+
+/* Bottom tab bar */
+.rp-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--rp-bottomnav) + var(--rp-safe-bottom));
+  padding-bottom: var(--rp-safe-bottom);
+  display: flex;
+  background: rgba(10, 12, 16, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--rp-border);
+  z-index: 100;
+}
+
+.rp-bottom-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--rp-muted);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 500;
+  min-height: var(--rp-bottomnav);
+  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rp-bottom-nav a i {
+  font-size: 22px;
   line-height: 1;
 }
 
-#component_header .mobile-menu-toggle:hover,
-#component_header .mobile-menu-toggle:focus {
-  opacity: 1;
-  outline: none;
+.rp-bottom-nav a.active {
+  color: var(--rp-green-bright);
 }
 
-#component_header .mobile-nav-overlay {
-  display: none;
+.rp-bottom-nav a:active {
+  opacity: 0.75;
 }
 
-@media (max-width: 768px) {
-  #component_header {
-    height: 56px;
-  }
-
-  #component_header a#actionBarLogo i,
-  #component_header a#actionBarLogo svg {
-    padding: 12px 14px;
-    font-size: 28px;
-  }
-
-  #component_header ul.menu {
-    display: none;
-    position: fixed;
-    top: 56px;
-    left: 0;
-    right: 0;
-    bottom: auto;
-    max-height: calc(100vh - 56px);
-    overflow-y: auto;
-    float: none;
-    margin: 0;
-    padding: 8px 0 16px;
-    background: rgba(10, 12, 16, 0.97);
-    backdrop-filter: blur(24px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-    z-index: 90;
-    flex-direction: column;
-  }
-
-  #component_header.mobile-nav-open ul.menu {
-    display: flex;
-  }
-
-  #component_header ul.menu li {
-    display: block;
-    padding: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  #component_header ul.menu li a {
-    display: block;
-    padding: 16px 20px;
-    font-size: 16px;
-    opacity: 0.9;
-  }
-
-  #component_header ul.menu li a.active {
-    border-bottom: none;
-    border-left: 3px solid #107c10;
-    background: rgba(16, 124, 16, 0.15);
-  }
-
-  #component_header .mobile-menu-toggle {
-    display: block;
-  }
-
-  /* Dim background when menu open */
-  #component_header .mobile-nav-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    top: 56px;
-    background: rgba(0, 0, 0, 0.45);
-    z-index: 85;
-  }
-
-  #component_header.mobile-nav-open .mobile-nav-overlay {
-    display: block;
-  }
+/* Pages */
+.rp-page {
+  width: 100%;
 }
 
-/* ---------- Main layout: body + friends sidebar ---------- */
-@media (max-width: 1024px) {
-  div#app_body {
-    width: 100vw;
-    height: auto;
-    min-height: 100vh;
-  }
-
-  div#app_body_container {
-    padding-top: 56px;
-    padding-bottom: 56px;
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  div#app_sidebar {
-    position: static;
-    width: 100%;
-    top: auto;
-    right: auto;
-    bottom: auto;
-    max-height: none;
-    background: rgba(0, 0, 0, 0.25);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    margin-top: 8px;
-    padding-bottom: 48px;
-  }
-
-  h2.title {
-    font-size: 18px;
-    padding-left: 4px;
-  }
+.rp-page-title {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 8px 0 4px;
+  padding: 0;
 }
 
-@media (max-width: 768px) {
-  div#app_body_container {
-    padding-top: 56px;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  /* Friends as horizontal chips on phone */
-  div#components_sidebarfriends {
-    padding: 12px 8px 20px;
-  }
-
-  div#components_sidebarfriends h2,
-  div#components_sidebarfriends .title {
-    font-size: 15px;
-    margin-bottom: 8px;
-  }
+.rp-page-sub {
+  font-size: 14px;
+  color: var(--rp-muted);
+  margin: 0 0 20px;
 }
 
-/* ---------- Cards ---------- */
-@media (max-width: 768px) {
-  div.component_card {
-    width: 100% !important;
-    max-width: 100%;
-    box-sizing: border-box;
-    margin-bottom: 12px;
-  }
-
-  div.component_card.fixedsize {
-    width: 100% !important;
-  }
-
-  div.component_card h1 {
-    font-size: 18px;
-  }
-
-  div.component_card h2 {
-    font-size: 14px;
-  }
-
-  div.component_card p {
-    font-size: 14px;
-  }
-
-  /* Home console cards: stack actions */
-  div.component_card > div[style*="display: flex"] {
-    flex-wrap: wrap;
-    gap: 10px !important;
-  }
+.rp-loader-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
 }
 
-/* ---------- Game title grid (xCloud library) ---------- */
-@media (max-width: 1024px) {
-  div.component_gametitle {
-    width: calc(25% - 10px);
-    min-width: 100px;
-  }
+/* Console cards */
+.rp-console-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-@media (max-width: 768px) {
-  div.component_gametitle {
-    width: calc(33.333% - 8px);
-    min-width: 90px;
-  }
-
-  /* Always show title overlay a bit on touch (no hover) */
-  div.component_gametitle div.component_gametitle_title {
-    opacity: 0.85;
-    min-height: 48px;
-    background: linear-gradient(0deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0) 100%);
-  }
-
-  div.component_gametitle div.component_gametitle_title p {
-    font-size: 11px;
-    bottom: 4px;
-  }
-
-  div.component_gametitle div.component_gametitle_infopage {
-    opacity: 0.9;
-  }
+.rp-console-card {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--rp-card);
+  border: 1px solid var(--rp-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
-@media (max-width: 420px) {
-  div.component_gametitle {
-    width: calc(50% - 8px);
-  }
+.rp-console-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #1a9b1a, #0a5a0a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-/* ---------- Auth / login ---------- */
-@media (max-width: 768px) {
-  div#component_auth_modal {
-    min-width: auto;
-    width: calc(100% - 32px);
-    max-width: 420px;
-    margin: 0 16px;
-  }
-
-  div.component_auth_profile_gamerpic,
-  div.component_auth_profile_gamerpic img.component_auth_profile_gamerpic_img {
-    width: 64px;
-    height: 64px;
-    border-radius: 32px;
-  }
+.rp-console-icon i {
+  font-size: 26px;
+  color: #fff;
 }
 
-/* ---------- Settings ---------- */
+.rp-console-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.rp-console-name {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 2px;
+  word-break: break-word;
+}
+
+.rp-console-id {
+  font-size: 11px;
+  color: var(--rp-muted);
+  margin: 0 0 8px;
+  word-break: break-all;
+  opacity: 0.7;
+}
+
+.rp-console-meta {
+  margin-bottom: 8px;
+}
+
+.rp-console-warn {
+  font-size: 12px;
+  color: #e8a838;
+  margin: 0 0 10px;
+}
+
+.rp-console-actions {
+  margin-top: 4px;
+}
+
+.rp-btn-full,
+.rp-console-actions .btn,
+.rp-console-actions button {
+  width: 100% !important;
+  min-height: 48px !important;
+  font-size: 15px !important;
+  border-radius: 12px !important;
+}
+
+.rp-empty {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--rp-muted);
+}
+
+.rp-empty i {
+  font-size: 48px;
+  color: var(--rp-green);
+  opacity: 0.6;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.rp-empty-hint {
+  font-size: 13px;
+  max-width: 280px;
+  margin: 8px auto 0;
+  line-height: 1.4;
+}
+
+/* Settings: horizontal tabs on small screens */
 @media (max-width: 1024px) {
   div#component_settings_sidebar {
+    display: flex;
+    flex-direction: column;
     position: relative;
-    top: 0;
-    right: auto;
-    left: auto;
-    bottom: auto;
     width: 100%;
+    top: auto;
+    left: auto;
+    right: auto;
+    bottom: auto;
   }
 
   div#component_settings_sidebar_menu {
     position: relative;
-    width: 100%;
     top: auto;
     left: auto;
-    bottom: auto;
-    display: flex;
+    width: 100%;
+    height: auto;
     overflow-x: auto;
+    overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    background: rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid var(--rp-border);
+    background: transparent;
   }
 
   div#component_settings_sidebar_menu ul {
@@ -287,16 +315,27 @@ body {
     flex-direction: row;
     flex-wrap: nowrap;
     width: max-content;
+    padding: 0;
+    margin: 0;
   }
 
   div#component_settings_sidebar_menu ul li {
+    display: block;
     border-bottom: none;
-    border-right: 1px solid rgba(0, 0, 0, 0.25);
+    border-right: 1px solid var(--rp-border);
     white-space: nowrap;
   }
 
   div#component_settings_sidebar_menu ul li a {
-    padding: 14px 16px;
+    display: block;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  div#component_settings_sidebar_menu ul li.active a,
+  div#component_settings_sidebar_menu ul li a.active {
+    border-bottom: 2px solid var(--rp-green);
+    background: rgba(16, 124, 16, 0.12);
   }
 
   div#component_settings_sidebar_content {
@@ -305,8 +344,9 @@ body {
     left: auto;
     right: auto;
     bottom: auto;
-    padding: 16px 12px 80px;
+    padding: 12px 0 24px;
     overflow-y: visible;
+    width: 100%;
   }
 
   div#component_settings_sidebar_content label {
@@ -323,13 +363,29 @@ body {
     max-width: 100%;
     box-sizing: border-box;
   }
-
-  div#component_settings_sidebar_content ul.kv-list {
-    padding: 8px 0;
-  }
 }
 
-/* ---------- Stream view ---------- */
+/* Cards global polish */
+div.component_card {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  border-radius: 16px;
+  background: var(--rp-card);
+  border: 1px solid var(--rp-border);
+}
+
+/* Stream view – hide chrome */
+body.rp-streaming #component_header,
+body.rp-streaming .rp-bottom-nav,
+body.rp-streaming #rp_bottom_nav {
+  display: none !important;
+}
+
+body.rp-streaming div#app_body_container {
+  padding: 0 !important;
+  max-width: none;
+}
+
 @media (max-width: 768px) {
   div#component_streamcomponent_gamebar {
     height: 52px;
@@ -337,71 +393,31 @@ body {
 
   div#component_streamcomponent_debug {
     width: 100vw;
-    height: 45vh;
-    max-height: 360px;
-  }
-
-  div#component_streamcomponent_debug_text {
-    width: calc(100% - 20px);
-    height: 40%;
-  }
-
-  div#component_streamcomponent_debug_webrtc_jitter,
-  div#component_streamcomponent_debug_webrtc_dropped {
-    width: calc(100% - 20px);
-    max-width: 100%;
+    height: 40vh;
+    max-height: 320px;
   }
 }
 
-/* ---------- Footer ---------- */
-@media (max-width: 768px) {
-  #component_footer {
-    height: 36px;
-    font-size: 12px;
+/* Touch targets */
+@media (max-width: 1024px) {
+  button,
+  a.btn,
+  .btn,
+  input,
+  select {
+    min-height: 44px;
   }
 }
 
-/* ---------- Title info / hero ---------- */
-@media (max-width: 768px) {
-  div#page_info_titleid {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  div#page_info_titleid h1 {
-    font-size: 20px;
-  }
-
-  div#page_info_hero {
-    padding-top: 12px;
-    padding-bottom: 16px;
-  }
+/* No horizontal scroll */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
-/* ---------- Utility: safe area for notched phones ---------- */
-@supports (padding: env(safe-area-inset-bottom)) {
-  @media (max-width: 768px) {
-    div#app_body_container {
-      padding-bottom: calc(56px + env(safe-area-inset-bottom));
-    }
-
-    #component_footer {
-      padding-bottom: env(safe-area-inset-bottom);
-      height: calc(36px + env(safe-area-inset-bottom));
-    }
-
-    #component_header {
-      padding-top: env(safe-area-inset-top);
-      height: calc(56px + env(safe-area-inset-top));
-    }
-  }
-}
-
-/* ---------- Prevent horizontal scroll ---------- */
-@media (max-width: 768px) {
-  html,
-  body {
-    overflow-x: hidden;
-    max-width: 100vw;
-  }
+/* Background gradient override for cleaner mobile look */
+body > div[style*="background"] {
+  background: var(--rp-bg) !important;
+  background-image: none !important;
 }
