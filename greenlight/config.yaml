@@ -1,5 +1,5 @@
 name: Greenlight headless
-version: "1.2.3"
+version: "1.3.0"
 slug: greenlight
 description: >-
   Xbox Remote Play (mobile-friendly Greenlight WebUI) as Home Assistant add-on.
@@ -22,6 +22,7 @@ options:
   webui_port: 9003
   webui_access_secret: ""
   pwa_name: "Xbox Remote Play"
+  unmodified_webui: true
   pwa_short_name: "RemotePlay"
   pwa_theme_color: "#107C10"
   pwa_background_color: "#000000"
@@ -29,6 +30,7 @@ options:
 schema:
   webui_port: port
   webui_access_secret: str?
+  unmodified_webui: bool
   pwa_name: str
   pwa_short_name: str
   pwa_theme_color: str

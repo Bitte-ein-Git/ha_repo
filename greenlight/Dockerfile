@@ -8,18 +8,30 @@ RUN apk add --no-cache git python3 make g++
 ARG GREENLIGHT_REF=main-v2
 RUN git clone --depth 1 -b ${GREENLIGHT_REF} https://github.com/pccr10001/greenlight-webonly.git .
 
-# --- Mobile UI + PWA assets ---
-COPY rootfs/mobile.css renderer/mobile.css
-COPY rootfs/header.mobile.tsx renderer/components/header.tsx
-COPY rootfs/home.mobile.tsx renderer/pages/home.tsx
-COPY rootfs/default-manifest.webmanifest renderer/public/manifest.webmanifest
+# ESLint/TS must not fail HA image builds
+RUN node <<'EOF'
+const fs = require('fs');
+const path = 'renderer/next.config.js';
+if (fs.existsSync(path)) {
+  let conf = fs.readFileSync(path, 'utf8');
+  if (!conf.includes('ignoreDuringBuilds')) {
+    conf = conf.replace(
+      /module\.exports\s*=\s*\{/,
+      "module.exports = {\n  eslint: { ignoreDuringBuilds: true },\n  typescript: { ignoreBuildErrors: true },"
+    );
+    fs.writeFileSync(path, conf);
+  }
+} else {
+  fs.writeFileSync(path, `module.exports = {
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
+};
+`);
+}
+console.log('next.config.js ready');
+EOF
 
-# Import mobile.css
-RUN echo '' >> renderer/styles.css \
- && echo '/* Mobile / RemotePlay (HA addon) */' >> renderer/styles.css \
- && echo "@import 'mobile.css';" >> renderer/styles.css
-
-# --- Patch webui.ts for HA port/secret + PWA manifest route ---
+# HA plumbing only (port / secret / optional PWA manifest route) — used by stock + mobile
 RUN node <<'EOF'
 const fs = require('fs');
 const p = 'main/webui.ts';
@@ -36,7 +48,7 @@ s = s.replace(
 );
 
 const inject = `
-        // Customizable PWA manifest (written by /run.sh from addon options)
+        // PWA manifest (optional; written by /run.sh when not using unmodified UI)
         this._express.get(['/manifest.webmanifest', '/manifest.json'], (req, res) => {
             const fs = require('fs')
             const path = require('path')
@@ -59,10 +71,29 @@ s = s.replace(
 );
 
 fs.writeFileSync(p, s);
-console.log('webui.ts patched');
+console.log('webui.ts HA patch applied');
 EOF
 
-# Inject PWA meta + viewport + apple splash into _app.tsx
+RUN npm i --legacy-peer-deps \
+ && npm i tsx typescript --no-save \
+ && (cd node_modules/xal-node && npm i && npm run build || true)
+
+# --- STOCK WebUI (no UI modifications) ---
+RUN npx next build renderer \
+ && npx next export -o app-stock renderer \
+ && echo "stock export done" \
+ && ls -la app-stock | head
+
+# --- MOBILE / RemotePlay UI patches ---
+COPY rootfs/mobile.css renderer/mobile.css
+COPY rootfs/header.mobile.tsx renderer/components/header.tsx
+COPY rootfs/home.mobile.tsx renderer/pages/home.tsx
+COPY rootfs/default-manifest.webmanifest renderer/public/manifest.webmanifest
+
+RUN echo '' >> renderer/styles.css \
+ && echo '/* Mobile / RemotePlay (HA addon) */' >> renderer/styles.css \
+ && echo "@import 'mobile.css';" >> renderer/styles.css
+
 RUN node <<'EOF'
 const fs = require('fs');
 const p = 'renderer/pages/_app.tsx';
@@ -82,24 +113,15 @@ const headInner = `
 `;
 
 if (s.includes('<Head>')) {
-  s = s.replace(
-    /<Head>[\s\S]*?<\/Head>/,
-    `<Head>${headInner}</Head>`
-  );
+  s = s.replace(/<Head>[\s\S]*?<\/Head>/, `<Head>${headInner}</Head>`);
 } else if (s.includes('<UserProvider')) {
   s = s.replace('<UserProvider', `<Head>${headInner}</Head>\n            <UserProvider`);
 }
 
-// Hide friends sidebar always (remote-play focused UI)
-s = s.replace(
-  /<div id="app_sidebar"[\s\S]*?<\/div>\s*<Footer \/>/,
-  '<Footer />'
-);
-// also remove SidebarFriends import usage if leftover
+s = s.replace(/<div id="app_sidebar"[\s\S]*?<\/div>\s*<Footer \/>/, '<Footer />');
 s = s.replace(/import SidebarFriends from[^\n]+\n/, '');
 s = s.replace(/<SidebarFriends><\/SidebarFriends>/g, '');
 
-// Stream route body class for chrome hide
 if (!s.includes('rp-streaming')) {
   s = s.replace(
     'const router = useRouter()',
@@ -114,23 +136,16 @@ if (!s.includes('rp-streaming')) {
 }
 
 fs.writeFileSync(p, s);
-console.log('_app.tsx PWA + layout patched');
+console.log('_app.tsx mobile patched');
 EOF
 
-# Media Session on stream page + better document title
 RUN node <<'EOF'
 const fs = require('fs');
 const p = 'renderer/pages/stream/[serverid].tsx';
 let s = fs.readFileSync(p, 'utf8');
 
 if (!s.includes('mediaSession')) {
-  // Rename page title
-  s = s.replace(
-    /Greenlight - Streaming/g,
-    'RemotePlay –'
-  );
-
-  // Inject media session effect right after state declarations
+  s = s.replace(/Greenlight - Streaming/g, 'RemotePlay –');
   const anchor = "const [queueTime, setQueueTime] = React.useState(0)";
   const hook = `const [queueTime, setQueueTime] = React.useState(0)
 
@@ -163,72 +178,40 @@ if (!s.includes('mediaSession')) {
             }
         }
     }, [router.query.serverid, router.query.name])`;
-
-  if (s.includes(anchor)) {
-    s = s.replace(anchor, hook);
-  }
+  if (s.includes(anchor)) s = s.replace(anchor, hook);
 }
-
 fs.writeFileSync(p, s);
-console.log('stream page media session patched');
+console.log('stream media session patched');
 EOF
 
-# Settings sidebar: drop debug if desired, keep usual settings; rename About label ok
 RUN node <<'EOF'
 const fs = require('fs');
 const p = 'renderer/components/settings/sidebar.tsx';
 if (fs.existsSync(p)) {
   let s = fs.readFileSync(p, 'utf8');
-  // keep all usual settings; only cosmetic
   s = s.replace('>About<', '>Account<');
   fs.writeFileSync(p, s);
-  console.log('settings sidebar patched');
 }
 EOF
 
-# Avoid ESLint indent/no-empty from our injected patches failing the HA image build
-RUN node <<'EOF'
-const fs = require('fs');
-const path = 'renderer/next.config.js';
-let conf = '';
-if (fs.existsSync(path)) {
-  conf = fs.readFileSync(path, 'utf8');
-  if (!conf.includes('ignoreDuringBuilds')) {
-    if (conf.includes('module.exports')) {
-      conf = conf.replace(
-        /module\.exports\s*=\s*\{/,
-        "module.exports = {\n  eslint: { ignoreDuringBuilds: true },\n  typescript: { ignoreBuildErrors: true },"
-      );
-    }
-  }
-  fs.writeFileSync(path, conf);
-  console.log('next.config.js eslint ignoreDuringBuilds set');
-} else {
-  fs.writeFileSync(path, `module.exports = {
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
-}
-`);
-  console.log('next.config.js created with eslint ignoreDuringBuilds');
-}
-EOF
+RUN npx next build renderer \
+ && npx next export -o app-mobile renderer \
+ && echo "mobile export done" \
+ && ls -la app-mobile | head
 
-RUN npm i --legacy-peer-deps \
- && npx next build renderer \
- && npx next export -o app renderer \
- && npm i tsx typescript --no-save \
- && (cd node_modules/xal-node && npm i && npm run build || true)
+# Default active tree = stock (safe; black-screen fix). run.sh may switch.
+RUN rm -rf app && cp -a app-stock app
 
 # ---------- runtime ----------
 FROM node:18-alpine
 
 ARG BUILD_ARCH=amd64
-ARG BUILD_VERSION=1.2.1
+ARG BUILD_VERSION=1.3.0
 ARG BUILD_DATE
 
 LABEL \
   io.hass.name="RemotePlay" \
-  io.hass.description="Xbox Remote Play WebUI (mobile-first)" \
+  io.hass.description="Xbox Remote Play WebUI for Home Assistant" \
   io.hass.version="${BUILD_VERSION}" \
   io.hass.type="addon" \
   io.hass.arch="${BUILD_ARCH}" \
@@ -245,11 +228,13 @@ RUN apk add --no-cache bash jq curl tini \
 
 COPY --from=builder /app /app
 COPY rootfs/run.sh /run.sh
-COPY rootfs/default-manifest.webmanifest /app/app/manifest.webmanifest
+COPY rootfs/default-manifest.webmanifest /app/app-mobile/manifest.webmanifest
 
 RUN chmod a+x /run.sh \
  && mkdir -p /data \
- && ln -sfn /data /app/data
+ && ln -sfn /data /app/data \
+ && test -d /app/app-stock \
+ && test -d /app/app-mobile
 
 EXPOSE 9003
 
