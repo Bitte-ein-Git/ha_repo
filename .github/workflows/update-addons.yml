@@ -13,13 +13,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        # checkout the repository
 
       - name: Install yq & jq
         run: |
           sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
           sudo chmod +x /usr/bin/yq
-        # install required tools
 
       - name: Update AppDaemon
         id: appdaemon
@@ -62,17 +60,17 @@ jobs:
             yq e -i ".slug = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
             yq e -i ".url = \"${LOCAL_URL}\"" appdaemon/config.yaml
             
+            # Inject system packages (Debian / apt)
             if [ -f "appdaemon/system_packages.config" ]; then
               PACKAGES=$(cat appdaemon/system_packages.config | tr '\n' ' ')
               if [ ! -z "$PACKAGES" ]; then
-                echo "" >> appdaemon/Dockerfile
-                echo "RUN apk add --no-cache $PACKAGES" >> appdaemon/Dockerfile
+                echo "Injecting system packages: $PACKAGES"
+                sed -i "/apt-get install -y --no-install-recommends \\\\/a\\        ${PACKAGES} \\\\" appdaemon/Dockerfile
               fi
             fi
           else
             echo "update_appdaemon=false" >> $GITHUB_OUTPUT
           fi
-        # handle appdaemon update logic
 
       - name: Update Portainer
         id: portainer
@@ -100,7 +98,6 @@ jobs:
           else
             echo "update_portainer=false" >> $GITHUB_OUTPUT
           fi
-        # handle portainer update logic
 
       - name: Commit and Push Changes
         if: steps.appdaemon.outputs.update_appdaemon == 'true' || steps.portainer.outputs.update_portainer == 'true'
@@ -127,4 +124,3 @@ jobs:
           COMMIT_BODY=$(echo -e "$COMMIT_BODY")
           git commit -m "$COMMIT_TITLE" -m "$COMMIT_BODY"
           git push
-        # commit changes to repository

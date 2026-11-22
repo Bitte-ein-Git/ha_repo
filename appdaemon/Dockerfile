@@ -32,6 +32,9 @@ RUN \
     \
     && apt-get install -y --no-install-recommends \
         patch \
+        libsodium-dev \
+        ffmpeg \
+        libopus-dev \
     \
     && YQ_ARCH="${BUILD_ARCH}" \
     && if [ "${BUILD_ARCH}" = "aarch64" ]; then YQ_ARCH="arm64"; fi \

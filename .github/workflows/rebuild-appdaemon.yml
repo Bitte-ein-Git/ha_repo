@@ -36,13 +36,12 @@ jobs:
           LOCAL_NAME=$(yq e '.name' appdaemon/config.yaml)
           LOCAL_DESC=$(yq e '.description' appdaemon/config.yaml)
           LOCAL_SLUG=$(yq e '.slug' appdaemon/config.yaml)
-          LOCAL_SLUG=$(yq e '.url' appdaemon/config.yaml)
+          LOCAL_URL=$(yq e '.url' appdaemon/config.yaml)
 
-          # Download and extract latest source (Robust Method)
+          # Download and extract latest source
           curl -L "https://github.com/hassio-addons/addon-appdaemon/archive/refs/tags/${LATEST_TAG}.tar.gz" -o /tmp/ad.tar.gz
           mkdir -p /tmp/ad_source
           tar -xzf /tmp/ad.tar.gz -C /tmp/ad_source
-          # Find the directory, avoiding guess work
           EXTRACTED_DIR=$(find /tmp/ad_source -maxdepth 1 -mindepth 1 -type d | head -n 1)
           
           # Replace codebase
@@ -60,16 +59,15 @@ jobs:
           yq e -i ".name = \"${LOCAL_NAME}\"" appdaemon/config.yaml
           yq e -i ".description = \"${LOCAL_DESC}\"" appdaemon/config.yaml
           yq e -i ".slug = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
-          yq e -i ".url = \"${LOCAL_SLUG}\"" appdaemon/config.yaml
+          yq e -i ".url = \"${LOCAL_URL}\"" appdaemon/config.yaml
           
-          # Inject system packages
+          # Inject system packages (Debian / apt)
           if [ -f "appdaemon/system_packages.config" ]; then
             PACKAGES=$(cat appdaemon/system_packages.config | tr '\n' ' ')
             if [ ! -z "$PACKAGES" ]; then
               echo "Injecting system packages: $PACKAGES"
-              echo "" >> appdaemon/Dockerfile
-              echo "# Custom System Packages" >> appdaemon/Dockerfile
-              echo "RUN apk add --no-cache $PACKAGES" >> appdaemon/Dockerfile
+              # Insert packages into the existing apt-get install block of the official Dockerfile
+              sed -i "/apt-get install -y --no-install-recommends \\\\/a\\        ${PACKAGES} \\\\" appdaemon/Dockerfile
             fi
           fi
 
