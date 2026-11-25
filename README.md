@@ -17,7 +17,7 @@
   | <img src="portainer/logo.png" width="128"> | [**Portainer**](./portainer) |
   | <img src="appdaemon/logo.png" width="128"> | [**🗿 » AppDaemon [Mod]**](./appdaemon) |
   | <img src="airplay_web/logo.png" width="128"> | [**🔊 • Shairport-Sync [AirPlay]**](./airplay_web) |
-  | <img src="betterbahn/logo.png" width="128"> | [**BetterBahn**](./betterbahn) |
+  | <img src="sdui/logo.png" width="128"> | [**Sdui SMB**](./sdui) |
   | <img src="mcbedrock/logo.png" width="128"> | [**MC Bedrock Server**](./mcbedrock) |
   | <img src="mcxboxbroadcast/logo.png" width="128"> | [**MCXboxBroadcast**](./mcxboxbroadcast) |
   | <img src="greenlight/icon.png" width="128"> | [**Greenlight headless**](./greenlight) |

@@ -1,0 +1,53 @@
+name: "Sdui SMB"
+version: "1.1.0"
+slug: sdui
+description: "Mirror Sdui messenger cloud files locally and share them via SMB"
+url: "https://github.com/Bitte-ein-Git/ha_repo"
+arch:
+  - aarch64
+  - amd64
+  - armv7
+startup: application
+boot: auto
+init: false
+map:
+  - share:rw
+  - addon_config:rw
+ports:
+  445/tcp: 445
+  139/tcp: 139
+ports_description:
+  445/tcp: "SMB"
+  139/tcp: "NetBIOS"
+host_network: false
+privileged:
+  - NET_ADMIN
+options:
+  school_slink: ""
+  school_search: ""
+  username: ""
+  password: ""
+  bearer_token: ""
+  user_id: ""
+  sync_interval_minutes: 30
+  smb_username: "sdui"
+  smb_password: "changeme"
+  smb_share_name: "sdui-cloud"
+  only_cloud_ids: []
+  max_file_size_mb: 500
+  download_concurrency: 4
+schema:
+  school_slink: str?
+  school_search: str?
+  username: str?
+  password: password?
+  bearer_token: password?
+  user_id: str?
+  sync_interval_minutes: int(5,1440)
+  smb_username: str
+  smb_password: password
+  smb_share_name: str
+  only_cloud_ids:
+    - int
+  max_file_size_mb: int(1,10000)
+  download_concurrency: int(1,16)

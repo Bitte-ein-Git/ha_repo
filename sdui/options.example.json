@@ -1,0 +1,12 @@
+{
+  "school_search": "Example School City",
+  "school_slink": "",
+  "username": "webuntis.user",
+  "password": "replace-me",
+  "bearer_token": "",
+  "user_id": "",
+  "sync_interval_minutes": 30,
+  "only_cloud_ids": [],
+  "max_file_size_mb": 500,
+  "download_concurrency": 4
+}
